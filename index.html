@@ -1,0 +1,3038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>EyeSpy</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* LIGHT THEME — built for daytime classroom use (10am–1:30pm) */
+  --bg:#f4f6fb;            /* soft warm-cool white, easier on eyes than #fff */
+  --surf:#ffffff;          /* card surface */
+  --surf2:#f8fafc;         /* elevated/subtle surface */
+  --surf3:#eef2f8;         /* hover/active */
+  --accent:#1e40af;        /* deep navy — matches THPS shield, professional */
+  --accent-l:#3b5fd9;
+  --accent-d:rgba(30,64,175,.10);
+  --crest-red:#c0322b;     /* THPS shield red — used sparingly */
+  --gold:#1e40af;          /* compat alias */
+  --goldl:#3b5fd9;
+  --goldd:rgba(30,64,175,.10);
+  --ink:#0f172a;           /* primary text */
+  --body:#1e293b;          /* body text */
+  --muted:#64748b;         /* secondary */
+  --muted-l:#94a3b8;       /* tertiary */
+  --border:#e2e8f0;
+  --border-strong:#cbd5e1;
+  --ibg:#f1f5f9;
+  --ok:#15803d;--bad:#b91c1c;--warn:#b45309;
+  --r:10px;--rs:8px;
+  --h4:#22c55e;--hx:#dc2626;--h2:#86efac;--h3:#4ade80;--h0:#f1f5f9;--h1:#bbf7d0;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.04);
+  --shadow:0 2px 8px rgba(15,23,42,.06);
+  --shadow-lg:0 12px 24px rgba(15,23,42,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;overflow:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.app{display:flex;flex-direction:column;height:100vh}
+
+/* HEADER */
+.hdr{
+  background:var(--surf);
+  padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+.hbrand{display:flex;align-items:center;gap:11px}
+/* EyeSpy custom mark — THPS shield + detective cap, drawn as SVG */
+.eyemark{
+  width:38px;height:38px;
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.eyemark svg{width:100%;height:100%;display:block}
+.hname{font-size:18px;font-weight:700;letter-spacing:-.3px;line-height:1;color:var(--ink)}
+.hname b{color:var(--accent);font-weight:800}
+.hsub{font-size:10.5px;color:var(--muted);margin-top:3px;letter-spacing:.1px;font-weight:500}
+/* School chip — subtle on right */
+.hschool{
+  display:flex;align-items:center;gap:7px;
+  padding:4px 10px 4px 5px;
+  background:var(--surf2);
+  border:1px solid var(--border);
+  border-radius:20px;
+}
+.hschool-logo{
+  width:24px;height:24px;
+  border-radius:50%;object-fit:contain;
+  background:#fff;
+  flex-shrink:0;
+}
+.hschool-name{
+  font-size:11px;font-weight:600;color:var(--body);
+  letter-spacing:.1px;white-space:nowrap;
+}
+.hright{display:flex;align-items:center;gap:8px}
+.hbtn{
+  width:34px;height:34px;
+  background:var(--surf2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;cursor:pointer;color:var(--muted);
+  transition:all .15s;
+}
+.hbtn:hover{background:var(--surf3);color:var(--ink);border-color:var(--border-strong)}
+
+@media(max-width:480px){
+  .hschool-name{display:none}
+}
+
+/* SCREENS */
+.screens{flex:1;overflow:hidden;position:relative}
+.scr{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;padding-bottom:20px}
+.scr.active{display:block}
+.main{padding:13px 15px;max-width:640px;margin:0 auto}
+
+/* BOTTOM NAV */
+.bnav{display:flex;background:var(--surf);border-top:1px solid var(--border);flex-shrink:0;box-shadow:0 -2px 8px rgba(15,23,42,.04)}
+.bn{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:10.5px;font-weight:500;transition:color .15s;position:relative;letter-spacing:.1px}
+.bn .ico{font-size:18px;line-height:1;opacity:.7}
+.bn.active{color:var(--accent);font-weight:600}
+.bn.active .ico{opacity:1}
+.bn.active::before{content:'';position:absolute;top:0;left:30%;right:30%;height:2px;background:var(--accent);border-radius:0 0 2px 2px}
+.bn:hover:not(.active){color:var(--body)}
+
+/* COMMON */
+.sec{font-family:'Inter',sans-serif;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:18px 0 9px;font-weight:600}
+.sec:first-child{margin-top:4px}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shadow-sm)}
+.lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.inp{width:100%;background:#fff;border:1px solid var(--border-strong);border-radius:var(--rs);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;padding:10px 12px;outline:none;transition:all .15s;-webkit-appearance:none;appearance:none;font-weight:500}
+select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+select.inp option{background:#fff;color:var(--ink)}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(30,64,175,.10)}
+.inp::placeholder{color:var(--muted-l)}
+textarea.inp{resize:none;line-height:1.55}
+input[type=date].inp::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.6}
+.fr{margin-bottom:12px}.fr:last-child{margin-bottom:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{
+  width:100%;padding:11px 14px;border:none;
+  border-radius:var(--rs);
+  font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:all .15s;
+  letter-spacing:.1px;
+}
+.btn-g{background:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(30,64,175,.25)}
+.btn-g:hover{background:var(--accent-l);box-shadow:0 2px 6px rgba(30,64,175,.30)}
+.btn-o{background:#fff;color:var(--body);border:1px solid var(--border-strong)}
+.btn-o:hover{background:var(--surf3);color:var(--ink);border-color:var(--muted-l)}
+.btn-v{background:#faf5ff;color:#7e22ce;border:1px solid #d8b4fe}
+.btn-v:hover{background:#f3e8ff}
+.btn-r{background:#fff;color:var(--bad);border:1px solid #fecaca}
+.btn-r:hover{background:#fef2f2}
+.brow{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.brow .btn{flex:1;min-width:120px}
+.pill{display:inline-block;font-family:'Inter',sans-serif;font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:600;letter-spacing:.1px}
+.pg{background:#dcfce7;color:#15803d}
+.pr{background:#fee2e2;color:#b91c1c}
+.py{background:#dbeafe;color:#1e40af}
+
+/* TOAST + LOADING */
+.toast{position:fixed;bottom:74px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);border-left:3px solid var(--ok);color:#fff;padding:11px 16px;border-radius:var(--rs);font-size:13px;font-weight:500;z-index:9999;transition:transform .3s cubic-bezier(.34,1.5,.64,1);white-space:nowrap;box-shadow:0 12px 32px rgba(15,23,42,.25)}
+.toast.show{transform:translateX(-50%) translateY(0)}.toast.err{border-left-color:var(--bad)}
+.loadov{position:fixed;inset:0;background:rgba(244,246,251,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:900;gap:14px;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(6px)}
+.loadov.show{opacity:1;pointer-events:all}
+.loadov div{color:var(--ink)!important}
+.spin{width:34px;height:34px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MODALS */
+.bkd{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:700;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px)}
+.bkd.show{opacity:1;pointer-events:all}
+.bsht{background:#fff;color:var(--ink);border-radius:var(--r) var(--r) 0 0;border:1px solid var(--border);width:100%;max-width:640px;padding:16px 15px 32px;transform:translateY(100%);transition:transform .32s cubic-bezier(.34,1.1,.64,1);max-height:90vh;overflow-y:auto;box-shadow:0 -8px 32px rgba(15,23,42,.15)}
+.bkd.show .bsht{transform:translateY(0)}
+.bhdl{width:36px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 16px}
+.btt{font-size:16px;font-weight:700;margin-bottom:3px;color:var(--ink)}
+.bss{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+
+/* ASSIGN */
+.flash{display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:var(--ok);font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1px solid #bbf7d0;margin-bottom:10px;opacity:0;transition:opacity .3s}
+.flash.show{opacity:1}
+.lwarn{background:#fef2f2;border:1px solid #fecaca;border-radius:var(--rs);padding:9px 12px;font-size:12px;color:var(--bad);margin-bottom:9px;display:none;font-weight:500}
+.lwarn.show{display:block}
+.srow{background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:11px;margin-bottom:8px}
+.srow-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.srow-badge{font-family:'Inter',sans-serif;font-size:10px;background:var(--accent-d);color:var(--accent);padding:3px 9px;border-radius:20px;font-weight:600}
+.rmbtn{width:24px;height:24px;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;color:var(--bad);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.rmbtn:hover{background:#fee2e2}
+.addsrow{width:100%;padding:10px;background:var(--accent-d);border:1.5px dashed rgba(30,64,175,.3);border-radius:var(--rs);color:var(--accent);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;transition:all .15s}
+.addsrow:hover{background:rgba(30,64,175,.15)}
+
+/* LABEL PREVIEW — true-to-size, B/W, no logo, no branding */
+#lblprev{background:#fff;color:#000;border:1px dashed #555;border-radius:2px;margin:0 auto 13px;box-shadow:0 4px 20px rgba(0,0,0,.35);overflow:hidden;font-family:Arial,sans-serif;box-sizing:border-box;display:flex;flex-direction:column}
+.lph{padding:0.8mm 1.5mm;border-bottom:1px solid #000;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0;color:#000}
+.lph-cls{font-weight:800}
+.lpb{padding:1mm 1.5mm;flex:1;color:#000;overflow:hidden}
+.lpr{margin-bottom:.4mm}
+.lpn{font-weight:800;color:#000}
+.lpt{line-height:1.2;color:#000}
+.lph-logo,.lph-name,.lpm,.lpf{display:none}
+
+/* SUBMISSIONS */
+.hwbox{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--rs);padding:11px 13px;margin-bottom:11px}
+.hwbox-t{font-size:10.5px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.hwbox-i{font-size:13px;color:var(--ink);line-height:1.7}
+.hwbox-i strong{color:var(--accent);font-weight:600}
+.substats{display:flex;gap:7px;margin-bottom:10px}
+.ssc{flex:1;background:var(--surf);border:1px solid var(--border);border-radius:var(--rs);padding:10px 7px;text-align:center;box-shadow:var(--shadow-sm)}
+.ssc-v{font-family:'Inter',sans-serif;font-size:22px;font-weight:700;color:var(--ink);line-height:1}
+.ssc-l{font-size:10.5px;color:var(--muted);margin-top:3px;font-weight:500;letter-spacing:.2px}
+
+/* STUDENT ROWS */
+.strow{padding:10px 4px;border-bottom:1px solid var(--border)}
+.strow:last-child{border-bottom:none}
+.stmain{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.stinfo{display:flex;align-items:center;gap:9px;flex:1}
+.stroll{font-family:'Inter',sans-serif;font-size:11px;color:var(--muted-l);width:20px;flex-shrink:0;font-weight:600}
+.stname{font-size:14px;font-weight:500;color:var(--ink)}
+.ststatus{font-size:10.5px;color:var(--muted);margin-left:4px;font-weight:500}
+.tgl{width:38px;height:22px;border-radius:11px;border:none;cursor:pointer;position:relative;transition:background .25s;flex-shrink:0}
+.tgl::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.tgl.done{background:var(--ok)}.tgl.done::after{transform:translateX(16px)}
+.tgl.nd{background:#fca5a5}
+.tgl.partial{background:var(--warn)}.tgl.partial::after{transform:translateX(16px)}
+.tgl.absent{background:#a5b4fc}.tgl.absent::after{transform:translateX(8px)}
+.abs-btn{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-strong);background:#fff;color:var(--muted);flex-shrink:0;transition:all .15s}
+.abs-btn:hover{border-color:#a5b4fc;color:#4338ca}
+.abs-btn.on{background:#eef2ff;border-color:#a5b4fc;color:#4338ca}
+.subj-sel{display:none;flex-wrap:wrap;gap:5px;margin-top:7px;padding:8px 10px;background:var(--surf2);border-radius:var(--rs);border:1px solid var(--border)}
+.subj-sel.show{display:flex}
+.schip{padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-strong);background:#fff;color:var(--muted);transition:all .15s}
+.schip.done{border-color:#86efac;background:#f0fdf4;color:#15803d}
+.schip.nd{border-color:#fca5a5;background:#fef2f2;color:#b91c1c}
+.grd-row{display:none;flex-wrap:wrap;gap:5px;margin-top:7px;padding-left:29px;align-items:center}
+.grd-row.show{display:flex}
+.gopt{padding:5px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-strong);background:#fff;color:var(--muted);transition:all .15s}
+.gopt:hover{border-color:var(--accent);color:var(--accent)}
+.gopt.sel-E{background:#dcfce7;border-color:#86efac;color:#15803d}
+.gopt.sel-G{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+.gopt.sel-A{background:#fef3c7;border-color:#fcd34d;color:#b45309}
+.gopt.sel-N{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
+.pendbtn{width:100%;padding:11px;background:#fffbeb;border:1.5px dashed #fcd34d;border-radius:var(--rs);color:#b45309;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:9px;transition:all .15s}
+.pendbtn:hover{background:#fef3c7}
+
+/* WA BUBBLE */
+.wabub{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:var(--r);padding:14px;margin-bottom:13px;font-size:12.5px;line-height:1.7;color:#065f46;font-family:'Inter',sans-serif;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto}
+
+/* REPORTS */
+.rtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:11px 15px 0;flex-shrink:0;background:var(--bg)}
+.rtabs::-webkit-scrollbar{display:none}
+.rtab{padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-strong);color:var(--muted);white-space:nowrap;background:#fff;transition:all .15s}
+.rtab:hover{border-color:var(--accent);color:var(--accent)}
+.rtab.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 6px rgba(30,64,175,.25)}
+.rpan{display:none;padding:11px 15px 70px}
+.rpan.active{display:block}
+.statg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:6px}
+@media(min-width:480px){.statg{grid-template-columns:repeat(4,1fr)}}
+.stc{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:12px 10px;box-shadow:var(--shadow-sm)}
+.stv{font-family:'Inter',sans-serif;font-size:22px;font-weight:700;line-height:1;color:var(--ink)}
+.stv.g{color:var(--ok)}.stv.r{color:var(--bad)}.stv.y{color:var(--accent)}
+.stl{font-size:11px;color:var(--muted);margin-top:5px;font-weight:500}
+.bcc{display:flex;flex-direction:column;gap:8px}
+.bcr{display:flex;align-items:center;gap:7px}
+.bcl{font-size:11px;font-weight:600;width:62px;min-width:62px;text-align:right;color:var(--body)}
+.bct{flex:1;background:#e2e8f0;border-radius:3px;height:18px;overflow:hidden}
+.bcf{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:6px;font-family:'Inter',sans-serif;font-size:10px;font-weight:700;color:#fff}
+.dt{width:100%;border-collapse:collapse;font-size:12.5px}
+.dt th{font-family:'Inter',sans-serif;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding:9px 10px;text-align:left;border-bottom:1px solid var(--border);font-weight:600;background:var(--surf2)}
+.dt td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--body);vertical-align:middle}
+.dt tr:last-child td{border-bottom:none}
+.dt strong{color:var(--ink);font-weight:600}
+.hs{overflow-x:auto;padding-bottom:3px}
+.hrow{display:flex;align-items:center;gap:2px;margin-bottom:2px}
+.hrl{font-size:9.5px;color:var(--muted);width:46px;min-width:46px;text-align:right;padding-right:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.hcl{width:14px;height:14px;border-radius:2px;cursor:pointer;flex-shrink:0;border:1px solid rgba(15,23,42,.04)}
+.hdh{display:flex;gap:2px;padding-left:52px;margin-bottom:3px}
+.hdl{width:14px;font-family:'Inter',sans-serif;font-size:8.5px;color:var(--muted-l);text-align:center;flex-shrink:0;font-weight:600}
+.sw{position:relative;margin-bottom:9px}
+.sw input{width:100%;background:#fff;border:1px solid var(--border-strong);border-radius:var(--rs);color:var(--ink);font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px 9px 34px;outline:none;transition:all .15s}
+.sw input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(30,64,175,.10)}
+.swi{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.stuc{background:var(--surf);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;cursor:pointer;display:flex;margin-bottom:7px;transition:all .15s;box-shadow:var(--shadow-sm)}
+.stuc:hover{background:var(--surf2);border-color:var(--border-strong)}
+.sp{font-family:'Inter',sans-serif;font-size:14px;font-weight:700}
+.sp.hi{color:var(--ok)}.sp.mid{color:var(--warn)}.sp.lo{color:var(--bad)}
+
+/* HEAT MAP COLORS — for light theme */
+:root{
+  --h0:#f1f5f9;          /* no data */
+  --h1:#dbeafe;          /* low */
+  --h2:#bfdbfe;
+  --h3:#93c5fd;
+  --h4:#22c55e;          /* high */
+  --hx:#fca5a5;          /* not done / fail */
+}
+
+/* SETTINGS */
+.setitem{background:var(--surf);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .15s;box-shadow:var(--shadow-sm)}
+.setitem:hover{background:var(--surf2);border-color:var(--border-strong)}
+.setil{display:flex;align-items:center;gap:11px}
+.settt{font-size:14px;font-weight:600;color:var(--ink)}
+.setds{font-size:11.5px;color:var(--muted);margin-top:2px;font-weight:500}
+.connst{display:flex;align-items:center;gap:7px;padding:10px 13px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--rs);font-size:12.5px;color:var(--ok);margin-bottom:12px;font-weight:500}
+.connst.bad{background:#fef2f2;border-color:#fecaca;color:var(--bad)}
+.cdot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.stdrow{background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;margin-bottom:6px}
+.secchips{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:6px}
+.secchip{display:flex;align-items:center;gap:3px;background:var(--accent-d);border:1px solid rgba(30,64,175,.18);border-radius:5px;padding:3px 9px;font-size:12px;color:var(--accent);font-weight:600}
+.stgl{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;position:relative;transition:background .25s;flex-shrink:0}
+.stgl::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 3px rgba(15,23,42,.2)}
+.stgl.on{background:var(--accent)}.stgl.on::after{transform:translateX(18px)}
+.stgl.off{background:var(--border-strong)}
+.codeb{background:#0f172a;border:1px solid var(--border);border-radius:var(--rs);padding:14px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;line-height:1.7;color:#7dd3fc;overflow-x:auto;max-height:280px;overflow-y:auto;margin-bottom:13px;white-space:pre}
+.tmpl-var{display:inline-block;background:var(--accent-d);color:var(--accent);font-family:'JetBrains Mono','SF Mono',monospace;font-size:10.5px;padding:3px 8px;border-radius:5px;margin:2px;cursor:pointer;font-weight:600;border:1px solid rgba(30,64,175,.2);transition:all .15s}
+.tmpl-var:hover{background:rgba(30,64,175,.18)}
+.csvdrop{border:2px dashed var(--border-strong);border-radius:var(--rs);padding:24px 20px;text-align:center;cursor:pointer;margin-bottom:12px;transition:all .15s;background:var(--surf2)}
+.csvdrop:hover{border-color:var(--accent);background:var(--accent-d)}
+.csv-prev{background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;max-height:160px;overflow-y:auto;margin-bottom:10px;font-size:12.5px;color:var(--body);line-height:1.7}
+.bkitem{background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 13px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.penditem{background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* SUBJECTS MANAGER */
+.subj-row{background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;margin-bottom:7px}
+.subj-row-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:7px}
+.subj-row-name{font-size:14px;font-weight:600;color:var(--ink)}
+.subj-list{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.subj-tag{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--border-strong);border-radius:6px;padding:4px 6px 4px 10px;font-size:12px;color:var(--ink);font-weight:500;transition:all .15s}
+.subj-tag-rm{width:18px;height:18px;background:#fee2e2;border:none;border-radius:4px;color:var(--bad);cursor:pointer;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.subj-tag-rm:hover{background:#fecaca}
+.subj-add-form{display:flex;gap:6px;margin-top:8px}
+.subj-add-form .inp{padding:7px 10px;font-size:13px}
+.subj-add-form .btn{padding:7px 12px;font-size:12px;flex:0 0 auto}
+
+/* PARENT REPORT (white print card) */
+.prcard{background:#fff;color:#111;padding:18px;border-radius:var(--rs);margin-bottom:13px;font-family:Arial,sans-serif}
+.prh{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1a2744;padding-bottom:9px;margin-bottom:11px}
+.prlogo{width:42px;height:42px;object-fit:contain}
+.prhs{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#1a2744}
+.prht{font-size:9px;color:#666;margin-top:2px}
+.prbar{width:100%;height:10px;background:#eee;border-radius:5px;margin:5px 0;overflow:hidden}
+.prbarf{height:100%;border-radius:5px}
+.prsr{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.prsn{font-size:10px;font-weight:600;width:78px}
+.prsb{flex:1;height:7px;background:#eee;border-radius:3px;overflow:hidden}
+.prsbf{height:100%;border-radius:3px}
+.prsp{font-size:9px;font-weight:600;width:28px;text-align:right}
+.prfoot{border-top:1px solid #eee;margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;font-size:9px;color:#888}
+
+/* HELP OVERLAY */
+.helpov{position:fixed;inset:0;background:var(--bg);z-index:800;display:none;flex-direction:column}
+.helpov.show{display:flex}
+.helphd{background:var(--surf);padding:13px 15px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border);flex-shrink:0;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.helpbody{flex:1;overflow-y:auto;padding:14px 15px 30px}
+.htabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:14px}
+.htabs::-webkit-scrollbar{display:none}
+.htab{padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-strong);color:var(--muted);white-space:nowrap;background:#fff;transition:all .15s}
+.htab:hover{border-color:var(--accent);color:var(--accent)}
+.htab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hpan{display:none}.hpan.active{display:block}
+.hstep{display:flex;gap:12px;margin-bottom:14px;background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:13px;box-shadow:var(--shadow-sm)}
+.hnum{width:28px;height:28px;min-width:28px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.hst{font-size:14px;font-weight:600;margin-bottom:3px;color:var(--ink)}
+.hsd{font-size:13px;color:var(--body);line-height:1.6}
+.htip{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--rs);padding:9px 12px;font-size:12px;color:var(--accent);margin-top:6px;line-height:1.6;font-weight:500}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hbrand">
+    <div class="eyemark">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-label="EyeSpy">
+        <!-- Detective deerstalker cap (top) -->
+        <g>
+          <!-- Cap brim -->
+          <ellipse cx="32" cy="16" rx="22" ry="3.5" fill="#3f2918"/>
+          <!-- Cap crown -->
+          <path d="M14 16 Q14 6 32 5.5 Q50 6 50 16 Z" fill="#5d3a1f"/>
+          <!-- Cap stripe -->
+          <path d="M16 13 Q32 9 48 13" stroke="#3f2918" stroke-width="1.5" fill="none"/>
+          <!-- Side ear flap -->
+          <path d="M11 14 Q9 19 13 22 Q15 19 14 15 Z" fill="#3f2918"/>
+          <!-- Top button -->
+          <circle cx="32" cy="5" r="1.5" fill="#8b5a2b"/>
+        </g>
+        <!-- Shield (THPS) -->
+        <g transform="translate(0,1)">
+          <!-- Outer shield outline -->
+          <path d="M16 18 L48 18 L48 36 Q48 48 32 56 Q16 48 16 36 Z" fill="#0f172a" stroke="#0f172a" stroke-width="0.5"/>
+          <!-- Red shield body -->
+          <path d="M18 20 L46 20 L46 36 Q46 46 32 53.5 Q18 46 18 36 Z" fill="#c0322b"/>
+          <!-- Vertical black band centre -->
+          <rect x="29" y="20" width="6" height="33.5" fill="#1a1a1a"/>
+          <!-- Gold pillared temple -->
+          <g fill="#f0b429">
+            <!-- Pediment (triangular roof) -->
+            <polygon points="26,33 38,33 32,28"/>
+            <!-- Pillars (3) -->
+            <rect x="27" y="34" width="1.8" height="6"/>
+            <rect x="31" y="34" width="2" height="6"/>
+            <rect x="35.2" y="34" width="1.8" height="6"/>
+            <!-- Base -->
+            <rect x="25.5" y="40" width="13" height="1.5"/>
+            <!-- Open book at base -->
+            <path d="M26 42 L32 41.5 L38 42 L38 44 L32 43.5 L26 44 Z"/>
+            <line x1="32" y1="41.8" x2="32" y2="43.7" stroke="#c0322b" stroke-width="0.4"/>
+          </g>
+          <!-- Laurel wreath left -->
+          <g fill="#f0b429">
+            <ellipse cx="22" cy="32" rx="1.5" ry="2.3" transform="rotate(-30 22 32)"/>
+            <ellipse cx="21" cy="36" rx="1.5" ry="2.3" transform="rotate(-15 21 36)"/>
+            <ellipse cx="22" cy="40" rx="1.5" ry="2.3" transform="rotate(15 22 40)"/>
+            <ellipse cx="24" cy="44" rx="1.5" ry="2.3" transform="rotate(35 24 44)"/>
+          </g>
+          <!-- Laurel wreath right -->
+          <g fill="#f0b429">
+            <ellipse cx="42" cy="32" rx="1.5" ry="2.3" transform="rotate(30 42 32)"/>
+            <ellipse cx="43" cy="36" rx="1.5" ry="2.3" transform="rotate(15 43 36)"/>
+            <ellipse cx="42" cy="40" rx="1.5" ry="2.3" transform="rotate(-15 42 40)"/>
+            <ellipse cx="40" cy="44" rx="1.5" ry="2.3" transform="rotate(-35 40 44)"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <div>
+      <div class="hname">Eye<b>Spy</b></div>
+      <div class="hsub">Homework Management</div>
+    </div>
+  </div>
+  <div class="hright">
+    <div class="hschool">
+      <img class="hschool-logo" id="hlogoImg" src="" alt="">
+      <span class="hschool-name">THPS</span>
+    </div>
+    <button class="hbtn" id="helpBtn">?</button>
+  </div>
+</div>
+
+<!-- SCREENS -->
+<div class="screens">
+
+<!-- ═══ ASSIGN ═══ -->
+<div class="scr active" id="scr-assign">
+<div class="main">
+  <div class="flash" id="flash">✓ Saved to Google Sheets</div>
+  <div class="lwarn" id="lwarn">⚠ Content too long for one label at 6.5pt — split into a second sticker.</div>
+  <div class="sec">Class &amp; Date</div>
+  <div class="card">
+    <div class="two">
+      <div class="fr"><label class="lbl">Class</label><select class="inp" id="aCls"></select></div>
+      <div class="fr"><label class="lbl">Due Date</label><input type="date" class="inp" id="aDue"></div>
+    </div>
+  </div>
+  <div class="sec">Subjects &amp; Homework</div>
+  <div class="card">
+    <div id="srowList"></div>
+    <button class="addsrow" id="addSRowBtn">＋ Add Subject</button>
+  </div>
+  <div class="brow">
+    <button class="btn btn-o" id="previewLblBtn">🔍 Preview Label</button>
+    <button class="btn btn-g" id="saveHWBtn">💾 Save &amp; Print</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ SUBMISSIONS ═══ -->
+<div class="scr" id="scr-sub">
+<div class="main">
+  <div class="sec">Select Class &amp; Date</div>
+  <div class="card">
+    <div class="two">
+      <div class="fr"><label class="lbl">Class</label><select class="inp" id="sCls"></select></div>
+      <div class="fr"><label class="lbl">HW Date</label><input type="date" class="inp" id="sDate"></div>
+    </div>
+    <button class="btn btn-g" style="margin-top:10px" id="loadSubBtn">Load Checklist</button>
+  </div>
+  <div id="subContent" style="display:none">
+    <div id="hwboxEl"></div>
+    <div class="substats">
+      <div class="ssc"><div class="ssc-v g" id="ssv-done">0</div><div class="ssc-l">Done</div></div>
+      <div class="ssc"><div class="ssc-v r" id="ssv-nd">0</div><div class="ssc-l">Not Done</div></div>
+      <div class="ssc"><div class="ssc-v y" id="ssv-pct">0%</div><div class="ssc-l">Rate</div></div>
+    </div>
+    <div class="sec">Student Checklist</div>
+    <div class="card" style="padding:3px 12px" id="stChecklist"></div>
+    <button class="pendbtn" id="pendBtn">📋 View Pending Students</button>
+    <div class="brow">
+      <button class="btn btn-o" id="openWABtn">💬 WhatsApp Message</button>
+      <button class="btn btn-g" id="saveSubBtn">💾 Save Submissions</button>
+    </div>
+  </div>
+  <div id="subEmpty" style="text-align:center;padding:50px 20px;color:var(--muted)">
+    <div style="font-size:38px;margin-bottom:10px">📋</div>
+    <div style="font-size:14px">Select a class and date,<br>then tap Load Checklist</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ REPORTS ═══ -->
+<div class="scr" id="scr-rep">
+  <div class="rtabs">
+    <button class="rtab active" data-rpanel="heat">🔥 Heat Map</button>
+    <button class="rtab" data-rpanel="cls">🏫 Class</button>
+    <button class="rtab" data-rpanel="date">📅 Date</button>
+    <button class="rtab" data-rpanel="stu">👤 Students</button>
+    <button class="rtab" data-rpanel="subj">📚 Subjects</button>
+    <button class="rtab" data-rpanel="pending">⏳ Pending</button>
+    <button class="rtab" data-rpanel="parent">👨‍👩‍👧 Parent</button>
+  </div>
+  <div class="rpan active" id="rp-heat">
+    <div class="statg" style="margin-top:4px">
+      <div class="stc"><div class="stv y">87%</div><div class="stl">Month completion</div></div>
+      <div class="stc"><div class="stv g">342</div><div class="stl">Submitted</div></div>
+      <div class="stc"><div class="stv r">51</div><div class="stl">Not submitted</div></div>
+      <div class="stc"><div class="stv">18</div><div class="stl">Days tracked</div></div>
+    </div>
+    <div class="sec">Class × Day — June 2026</div>
+    <div class="card" style="padding:11px 9px"><div class="hs"><div id="clsHeat"></div></div></div>
+    <div class="sec">Student × Day — <select class="inp" id="hmCls" style="display:inline-block;width:auto;padding:4px 26px 4px 8px;font-size:12px"></select></div>
+    <div class="card" style="padding:11px 9px"><div class="hs"><div id="stuHeat"></div></div></div>
+  </div>
+  <div class="rpan" id="rp-cls">
+    <div class="sec" style="margin-top:4px">Submission rate — June 2026</div>
+    <div class="card"><div class="bcc" id="clsBar"></div></div>
+    <div class="sec">Summary</div>
+    <div class="card" style="padding:0"><table class="dt" id="clsTbl"></table></div>
+    <button class="btn btn-o" style="margin-top:12px" id="expClsBtn">⬇ Export Class Report (CSV)</button>
+  </div>
+  <div class="rpan" id="rp-date">
+    <div class="sec" style="margin-top:4px">Daily completion — June 2026</div>
+    <div class="card"><div class="bcc" id="dateBar"></div></div>
+    <div class="sec">Homework log</div>
+    <div class="card" style="padding:0"><table class="dt" id="dateTbl"></table></div>
+  </div>
+  <div class="rpan" id="rp-stu">
+    <div id="stuListV">
+      <div style="margin-top:4px"><select class="inp" id="stuClsF" style="margin-bottom:9px"></select></div>
+      <div class="sw"><span class="swi">🔍</span><input type="text" id="stuSrch" placeholder="Search student…"></div>
+      <div id="stuListEl"></div>
+      <button class="btn btn-o" style="margin-top:10px" id="expStuBtn">⬇ Export Annual Summary</button>
+    </div>
+    <div id="stuProfV" style="display:none"></div>
+  </div>
+  <div class="rpan" id="rp-subj">
+    <div class="sec" style="margin-top:4px">Non-submission by subject</div>
+    <div class="card"><div class="bcc" id="subjBar"></div></div>
+    <div class="card" style="padding:0"><table class="dt" id="subjTbl"></table></div>
+  </div>
+  <div class="rpan" id="rp-pending">
+    <div class="sec" style="margin-top:4px">Pending Homework Follow-up</div>
+    <div class="card">
+      <div class="bss" style="margin-bottom:12px">All outstanding homework that hasn't been completed yet. Use this to follow up with students and parents.</div>
+      <div class="fr"><label class="lbl">View</label>
+        <select class="inp" id="pendScope">
+          <option value="school">🏫 Whole School</option>
+          <option value="class">🏫 By Class</option>
+          <option value="student">👤 By Student</option>
+        </select>
+      </div>
+      <div class="fr" id="pendClsWrap" style="display:none;margin-top:10px"><label class="lbl">Class</label><select class="inp" id="pendCls"></select></div>
+      <div class="fr" id="pendStuWrap" style="display:none;margin-top:10px"><label class="lbl">Student</label><select class="inp" id="pendStu"><option value="">Select…</option></select></div>
+    </div>
+    <div class="statg">
+      <div class="stc"><div class="stv r" id="pendTotalStu">0</div><div class="stl">Students with pending</div></div>
+      <div class="stc"><div class="stv y" id="pendTotalItems">0</div><div class="stl">Pending homework items</div></div>
+      <div class="stc"><div class="stv p" id="pendOldest">—</div><div class="stl">Oldest pending</div></div>
+      <div class="stc"><div class="stv" id="pendAbsent">0</div><div class="stl">Absent-related</div></div>
+    </div>
+    <div id="pendReportBody"></div>
+    <div class="brow">
+      <button class="btn btn-o" id="pendCSVBtn">⬇ Download CSV</button>
+      <button class="btn btn-g" id="pendPrintBtn">🖨 Print Follow-up</button>
+    </div>
+  </div>
+  <div class="rpan" id="rp-parent">
+    <div class="sec" style="margin-top:4px">Generate parent report card</div>
+    <div class="card">
+      <div class="two">
+        <div class="fr"><label class="lbl">Class</label><select class="inp" id="prCls"></select></div>
+        <div class="fr"><label class="lbl">Month</label><select class="inp" id="prMonth"><option value="6">June 2026</option><option value="5">May 2026</option><option value="4">April 2026</option></select></div>
+      </div>
+      <div class="fr" style="margin-top:10px"><label class="lbl">Student</label><select class="inp" id="prStu"><option value="">Select…</option></select></div>
+      <div class="fr" style="margin-top:10px"><label class="lbl">Teacher's Note</label><textarea class="inp" id="prNote" rows="2" placeholder="Optional personal note for parents…"></textarea></div>
+    </div>
+    <div class="brow">
+      <button class="btn btn-v" id="prevPRBtn">👁 Preview</button>
+      <button class="btn btn-g" id="printPRBtn">🖨 Print Report</button>
+    </div>
+    <div id="prPreview" style="margin-top:14px;display:none"></div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="scr" id="scr-set">
+<div class="main">
+  <div class="sec" style="margin-top:2px">Google Sheets</div>
+  <div id="connSt" class="connst bad"><span class="cdot"></span><span id="connTxt">Not connected — paste Apps Script URL below</span></div>
+  <div class="card">
+    <div class="fr"><label class="lbl">Apps Script URL</label><input class="inp" type="text" id="urlInp" placeholder="https://script.google.com/macros/s/…/exec"></div>
+    <div class="brow">
+      <button class="btn btn-g" id="testConnBtn">🔌 Test Connection</button>
+      <button class="btn btn-o" id="scriptCodeBtn">📋 Get Script Code</button>
+    </div>
+  </div>
+  <div class="sec">Classes &amp; Students</div>
+  <div class="setitem" id="secBtn"><div class="setil"><span style="font-size:17px;width:26px;text-align:center">🏫</span><div><div class="settt">Manage Sections</div><div class="setds" id="secDesc">Loading…</div></div></div><span style="color:var(--muted)">›</span></div>
+  <div class="setitem" id="csvBtn"><div class="setil"><span style="font-size:17px;width:26px;text-align:center">📥</span><div><div class="settt">Bulk Import Students</div><div class="setds">Upload CSV to add students</div></div></div><span style="color:var(--muted)">›</span></div>
+  <div class="setitem" id="promoteBtn"><div class="setil"><span style="font-size:17px;width:26px;text-align:center">🎓</span><div><div class="settt">Promote to Next Class</div><div class="setds">Move all students up at year-end</div></div></div><span style="color:var(--muted)">›</span></div>
+  <div class="sec">Homework</div>
+  <div class="setitem" id="subjBtn"><div class="setil"><span style="font-size:17px;width:26px;text-align:center">📚</span><div><div class="settt">Manage Subjects</div><div class="setds" id="subjDesc">Add, edit, delete subjects per standard</div></div></div><span style="color:var(--muted)">›</span></div>
+  <div class="setitem" id="gradBtn"><div class="setil"><span style="font-size:17px;width:26px;text-align:center">⭐</span><div><div class="settt">Grading System</div><div class="setds" id="gradDesc">Enable per standard</div></div></div><span style="color:var(--muted)">›</span></div>
+  <div class="setitem" id="waTemplBtn"><div class="setil"><span style="font-size:17px;width:26px;text-align:center">💬</span><div><div class="settt">WhatsApp Template</div><div class="setds">Edit message format</div></div></div><span style="color:var(--muted)">›</span></div>
+  <div class="sec">Label</div>
+  <div class="card">
+    <div class="fr"><label class="lbl">Label Size (mm) — Default 60 × 40</label>
+      <div class="two">
+        <div><label class="lbl">Width</label><input class="inp" type="number" id="lblW" value="60"></div>
+        <div><label class="lbl">Height</label><input class="inp" type="number" id="lblH" value="40"></div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted)">⚠ Minimum font on label is <strong style="color:var(--gold)">6.5pt</strong></div>
+    <button class="btn btn-o" style="margin-top:10px" id="saveLblBtn">Save Label Size</button>
+  </div>
+  <div class="sec">School Info</div>
+  <div class="card">
+    <div class="fr"><label class="lbl">School Name</label><input class="inp" type="text" id="schName" value="The Heritage Public School"></div>
+    <div class="fr" style="margin-top:10px"><label class="lbl">Website</label><input class="inp" type="text" id="schWeb" value="www.thps.in"></div>
+    <button class="btn btn-g" style="margin-top:10px" id="saveSchBtn">Save School Info</button>
+  </div>
+  <div class="sec">Backups &amp; Export</div>
+  <div class="setitem" id="bkBtn"><div class="setil"><span style="font-size:17px;width:26px;text-align:center">🔒</span><div><div class="settt">Auto Backups</div><div class="setds" id="bkDesc">View saved backups</div></div></div><span style="color:var(--muted)">›</span></div>
+  <div class="setitem" id="expBtn"><div class="setil"><span style="font-size:17px;width:26px;text-align:center">📤</span><div><div class="settt">Export Reports</div><div class="setds">Monthly class &amp; student reports</div></div></div><span style="color:var(--muted)">›</span></div>
+</div>
+</div>
+
+</div><!-- /screens -->
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="bn active" data-nav="assign"><span class="ico">✏️</span>Assign</button>
+  <button class="bn" data-nav="sub"><span class="ico">✅</span>Submit</button>
+  <button class="bn" data-nav="rep"><span class="ico">📊</span>Reports</button>
+  <button class="bn" data-nav="set"><span class="ico">⚙️</span>Settings</button>
+</div>
+</div><!-- /app -->
+
+<!-- OVERLAYS -->
+<div class="loadov" id="loadOv"><div class="spin"></div><div style="font-size:13px;color:var(--muted)" id="ovTxt">Loading…</div></div>
+<div class="toast" id="toast"></div>
+
+<!-- LABEL MODAL -->
+<div class="bkd" id="lblModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">📋 Label Preview</div>
+  <div class="bss" id="lblNote">60 × 40 mm · Min 6.5pt</div>
+  <div id="lblprev"></div>
+  <div class="brow">
+    <button class="btn btn-g" id="printLblBtn">🖨 Print</button>
+    <button class="btn btn-o" id="driveLblBtn">☁ Drive</button>
+    <button class="btn btn-o" data-close="lblModal">Close</button>
+  </div>
+</div></div>
+
+<!-- WA MODAL -->
+<div class="bkd" id="waModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">💬 WhatsApp Message</div>
+  <div class="bss">Copy and paste into your class group</div>
+  <div class="wabub" id="waBub"></div>
+  <div class="brow">
+    <button class="btn btn-g" id="copyWABtn">📋 Copy</button>
+    <button class="btn btn-o" id="editTmplBtn">✏️ Edit Template</button>
+    <button class="btn btn-o" data-close="waModal">Close</button>
+  </div>
+</div></div>
+
+<!-- PENDING MODAL -->
+<div class="bkd" id="pendModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">⏳ Pending Students</div>
+  <div class="bss">Students who missed homework — mark resolved after late submission.</div>
+  <div id="pendList"></div>
+  <button class="btn btn-o" style="margin-top:6px" data-close="pendModal">Close</button>
+</div></div>
+
+<!-- SECTION MODAL -->
+<div class="bkd" id="secModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">🏫 Classes &amp; Sections</div>
+  <div class="bss">Default: 1 section (A) per standard. Add more as needed.</div>
+  <div id="secList"></div>
+  <button class="btn btn-g" style="margin-top:6px" data-close="secModal">Done</button>
+</div></div>
+
+<!-- GRADING MODAL -->
+<div class="bkd" id="gradModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">⭐ Grading System</div>
+  <div class="bss">Enable per standard: Excellent · Good · Average · Needs Work</div>
+  <div id="gradList"></div>
+  <button class="btn btn-g" style="margin-top:6px" data-close="gradModal">Done</button>
+</div></div>
+
+<!-- SUBJECTS MODAL -->
+<div class="bkd" id="subjModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">📚 Manage Subjects</div>
+  <div class="bss">Add, edit or remove subjects for each standard. Changes apply to homework assignment dropdowns immediately.</div>
+  <div id="subjList"></div>
+  <div class="brow">
+    <button class="btn btn-o" id="resetSubjBtn">↩ Reset to Defaults</button>
+    <button class="btn btn-g" data-close="subjModal">Done</button>
+  </div>
+</div></div>
+
+<!-- WA TEMPLATE MODAL -->
+<div class="bkd" id="waTemplModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">💬 WhatsApp Template</div>
+  <div class="bss">Tap a variable to insert at cursor.</div>
+  <div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:4px">
+    <span class="tmpl-var" data-var="{DATE}">📅 {DATE}</span>
+    <span class="tmpl-var" data-var="{CLASS}">🏫 {CLASS}</span>
+    <span class="tmpl-var" data-var="{COMPLETED_LIST}">✅ {COMPLETED_LIST}</span>
+    <span class="tmpl-var" data-var="{NOT_DONE_LIST}">⚠️ {NOT_DONE_LIST}</span>
+    <span class="tmpl-var" data-var="{DONE_COUNT}">📊 {DONE_COUNT}</span>
+    <span class="tmpl-var" data-var="{TOTAL_COUNT}">📊 {TOTAL_COUNT}</span>
+    <span class="tmpl-var" data-var="{SCHOOL_NAME}">🏛 {SCHOOL_NAME}</span>
+  </div>
+  <div class="fr"><label class="lbl">🟢 All Submitted Template</label><textarea class="inp" id="tmpl-all" rows="8"></textarea></div>
+  <div class="fr" style="margin-top:10px"><label class="lbl">🟡 Some Not Done Template</label><textarea class="inp" id="tmpl-partial" rows="10"></textarea></div>
+  <div class="fr" style="margin-top:10px"><label class="lbl">🔴 None Completed Template</label><textarea class="inp" id="tmpl-none" rows="10"></textarea></div>
+  <div class="brow">
+    <button class="btn btn-g" id="saveTmplBtn">💾 Save Templates</button>
+    <button class="btn btn-o" id="resetTmplBtn">↩ Reset Default</button>
+  </div>
+</div></div>
+
+<!-- CSV MODAL -->
+<div class="bkd" id="csvModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">📥 Bulk Import Students</div>
+  <div class="bss">Add students to any class from a CSV or by pasting names.</div>
+  <div class="fr"><label class="lbl">Target Class</label><select class="inp" id="csvCls"></select></div>
+  <div class="csvdrop" id="csvDrop">
+    <input type="file" id="csvFile" accept=".csv,.txt" style="display:none">
+    <div style="font-size:30px;margin-bottom:6px">📄</div>
+    <div style="font-size:14px;font-weight:600;color:var(--body)">Tap to upload CSV</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:3px">One name per line</div>
+  </div>
+  <div class="fr"><label class="lbl">Or paste names (one per line)</label>
+    <textarea class="inp" id="csvPaste" rows="5" placeholder="Aarav Shah&#10;Riya Patel&#10;Mihir Desai"></textarea>
+  </div>
+  <div id="csvPrevWrap" style="display:none">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px" id="csvPrevCnt"></div>
+    <div class="csv-prev" id="csvPrev"></div>
+  </div>
+  <div class="brow">
+    <button class="btn btn-g" id="importBtn">✓ Import Students</button>
+    <button class="btn btn-o" id="csvTmplBtn">⬇ Download Template</button>
+  </div>
+</div></div>
+
+<!-- PROMOTE MODAL -->
+<div class="bkd" id="promoteModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">🎓 Promote to Next Class</div>
+  <div class="bss">At year-end, move every student up one class. Standard 12 students graduate and are archived. This action is reversible from Backups for 30 days.</div>
+
+  <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:var(--rs);padding:11px 13px;margin-bottom:12px;font-size:12px;color:#fcd34d;line-height:1.6">
+    ⚠️ <strong>Important:</strong> Run this only at the end of the academic year. EyeSpy will create a full backup before promoting, so you can undo if needed.
+  </div>
+
+  <div class="card" style="background:rgba(255,255,255,.02);padding:11px 13px">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Promotion Plan</div>
+    <div id="promotePlan" style="font-size:12px;color:var(--body);line-height:1.9"></div>
+  </div>
+
+  <div class="fr" style="margin-top:12px"><label class="lbl">New Academic Year Label</label>
+    <input class="inp" type="text" id="promoteYear" placeholder="e.g. 2027–28">
+  </div>
+
+  <div class="fr">
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--body);cursor:pointer">
+      <input type="checkbox" id="archive12" checked style="width:16px;height:16px;cursor:pointer">
+      Archive Standard 12 graduating students (they will be moved to archive, not deleted)
+    </label>
+  </div>
+
+  <div class="fr">
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--body);cursor:pointer">
+      <input type="checkbox" id="clearPending" checked style="width:16px;height:16px;cursor:pointer">
+      Clear pending homework records (for the new year)
+    </label>
+  </div>
+
+  <div class="brow">
+    <button class="btn btn-g" id="confirmPromoteBtn">🎓 Promote All Classes</button>
+    <button class="btn btn-o" data-close="promoteModal">Cancel</button>
+  </div>
+</div></div>
+
+<!-- BACKUP MODAL -->
+<div class="bkd" id="bkModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">🔒 Auto Backups</div>
+  <div class="bss">Saved automatically on every save. Up to 20 kept.</div>
+  <div id="bkList"></div>
+  <button class="btn btn-o" style="margin-top:6px" data-close="bkModal">Close</button>
+</div></div>
+
+<!-- SCRIPT MODAL -->
+<div class="bkd" id="scriptModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">Google Apps Script Backend</div>
+  <div class="bss">Copy → script.google.com → New Project → Code.gs → Deploy as Web App</div>
+  <div class="codeb" id="scriptCode"></div>
+  <button class="btn btn-g" id="copyScriptBtn">📋 Copy Code</button>
+</div></div>
+
+<!-- EXPORT MODAL -->
+<div class="bkd" id="expModal">
+<div class="bsht"><div class="bhdl"></div>
+  <div class="btt">📤 Export Reports</div>
+  <div class="bss">Generate printable reports to store in your file.</div>
+  <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:13px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:11px" id="expCls"><span style="font-size:22px">🏫</span><div><div style="font-size:14px;font-weight:700">Monthly Class Report (CSV)</div><div style="font-size:12px;color:var(--muted);margin-top:2px">All classes — completion — downloads as CSV file</div></div></div>
+  <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:13px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:11px" id="expNotDone"><span style="font-size:22px">📋</span><div><div style="font-size:14px;font-weight:700">Not-Done Report (CSV)</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Each student's specific missed homework, with date &amp; subject</div></div></div>
+  <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:13px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:11px" id="expStu"><span style="font-size:22px">👤</span><div><div style="font-size:14px;font-weight:700">Student Annual Summary</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Every student — for result cards</div></div></div>
+  <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:13px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:11px" id="expSubj"><span style="font-size:22px">📚</span><div><div style="font-size:14px;font-weight:700">Subject Analysis</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Which subjects have most non-submissions</div></div></div>
+</div></div>
+
+<!-- HELP OVERLAY -->
+<div class="helpov" id="helpOv">
+  <div class="helphd">
+    <button style="background:none;border:none;color:var(--gold);font-size:14px;font-weight:700;cursor:pointer" id="helpBack">← Back</button>
+    <div style="font-size:15px;font-weight:700">EyeSpy — How to Use</div>
+  </div>
+  <div class="helpbody">
+    <div class="htabs">
+      <button class="htab active" data-hpan="h1">✏️ Assign</button>
+      <button class="htab" data-hpan="h2">✅ Submit</button>
+      <button class="htab" data-hpan="h3">📊 Reports</button>
+      <button class="htab" data-hpan="h4">⚙️ Settings</button>
+      <button class="htab" data-hpan="h5">☁ Sheets</button>
+    </div>
+    <div class="hpan active" id="h1">
+      <div class="hstep"><div class="hnum">1</div><div><div class="hst">Select Class &amp; Due Date</div><div class="hsd">Pick the class. Due date defaults to tomorrow — change if needed.</div></div></div>
+      <div class="hstep"><div class="hnum">2</div><div><div class="hst">Add Subjects</div><div class="hsd">Tap "＋ Add Subject", select a subject, type the homework. Add as many subjects as needed.</div></div></div>
+      <div class="hstep"><div class="hnum">3</div><div><div class="hst">Save &amp; Print</div><div class="hsd">Tap Save. EyeSpy saves to Google Sheets and opens the label preview. If content is too long, a warning shows — split into a second sticker.</div><div class="htip">📐 Min font is 6.5pt. EyeSpy warns if content won't fit.</div></div></div>
+      <div class="hstep"><div class="hnum">4</div><div><div class="hst">School Logo on Label</div><div class="hsd">Your THPS logo and school name appear on every printed label automatically.</div></div></div>
+    </div>
+    <div class="hpan" id="h2">
+      <div class="hstep"><div class="hnum">1</div><div><div class="hst">Select Class &amp; Date → Load</div><div class="hsd">Pick the class and date being checked, then tap Load Checklist.</div></div></div>
+      <div class="hstep"><div class="hnum">2</div><div><div class="hst">Mark Not-Done Students</div><div class="hsd">All students start as Done (green ✓). Tap the toggle to mark a student Not Done (red). Subject chips appear — tap to specify which subjects are missing.</div><div class="htip">🎯 The WhatsApp message groups by subject automatically based on your chip selection.</div></div></div>
+      <div class="hstep"><div class="hnum">3</div><div><div class="hst">Save → WhatsApp Message</div><div class="hsd">Tap Save. The WhatsApp message is generated with completed subjects listed first, then not-done students grouped by subject.</div></div></div>
+      <div class="hstep"><div class="hnum">4</div><div><div class="hst">Late Submission</div><div class="hsd">Tap "View Pending Students" to see previously not-done students. When they submit late, tap Resolved to update their record.</div></div></div>
+    </div>
+    <div class="hpan" id="h3">
+      <div class="hstep"><div class="hnum">1</div><div><div class="hst">Heat Map</div><div class="hsd">Month at a glance — green = high completion, red = low. Hover for exact %.</div></div></div>
+      <div class="hstep"><div class="hnum">2</div><div><div class="hst">Student Report</div><div class="hsd">Search any student, tap to see full year record, subject breakdown, and completion heat map.</div></div></div>
+      <div class="hstep"><div class="hnum">3</div><div><div class="hst">Parent Report Card</div><div class="hsd">Select class, month, student. Add optional teacher note. Print a professional parent-facing card with logo, completion rate, and subject breakdown.</div></div></div>
+    </div>
+    <div class="hpan" id="h4">
+      <div class="hstep"><div class="hnum">1</div><div><div class="hst">Bulk Import Students</div><div class="hsd">Settings → Bulk Import → select class → paste names or upload CSV. App adds all at once.</div></div></div>
+      <div class="hstep"><div class="hnum">2</div><div><div class="hst">WhatsApp Template</div><div class="hsd">Settings → WhatsApp Template → edit format. Use variables: {DATE}, {CLASS}, {NOT_DONE_LIST}, {COMPLETED_LIST}, {SCHOOL_NAME}.</div></div></div>
+      <div class="hstep"><div class="hnum">3</div><div><div class="hst">Label Size</div><div class="hsd">Default is 60 × 40 mm. Change to match your printer paper. Min font stays at 6.5pt.</div></div></div>
+    </div>
+    <div class="hpan" id="h5">
+      <div class="hstep"><div class="hnum">1</div><div><div class="hst">Create Google Sheet</div><div class="hsd">Go to sheets.google.com → create blank sheet → copy the Sheet ID from the URL.</div></div></div>
+      <div class="hstep"><div class="hnum">2</div><div><div class="hst">Deploy Backend Script</div><div class="hsd">script.google.com → New Project → paste code (Settings → Get Script Code) → replace YOUR_SHEET_ID → Deploy as Web App → Execute as Me → Anyone.</div></div></div>
+      <div class="hstep"><div class="hnum">3</div><div><div class="hst">Connect EyeSpy</div><div class="hsd">Settings → paste URL → Test Connection → done. All data now syncs to your Sheet.</div><div class="htip">💡 Cost: ₹0/month. Runs on your free Google account.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN SCRIPT -->
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════
+// SCHOOL LOGO — injected by setup
+// ═══════════════════════════════════════════
+var SCHOOL_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAIAAAAiOjnJAAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAABHk0lEQVR42u19d7hU1fX2WnufMmf63F7oSBdECKAURbERe0msUWMSS2KJ3TRrTDFRo0mMPViiYgyWgIpiVxTEIDZQqnQut0yfOWXv9f2xZ+bOvaD5fY8kap7zPk8Md2buOefOec/aq7xrbfQ8D3z42NVg/lfgwyeWD59YPnxi+fDhE8uHTywfPrF8+PCJ5cMnlg+fWD58+MTy4RPLh08sHz58YvnwieXDJ5YPHz6xfPjE8uETy4cPn1g+fGL58Inlw4dPLB8+sXz4xPLhwyeWD59YPnxi+fDhE8uHTywfPrF8+PCJ5cMnlg+fWD58+MTy4RPLh08sHz58YvnwieXDJ5YPHz6xfPjE8uETy4cPn1g+fGL58Inlw4dPLB8+sXz4xPLhwyeWD59YPnxi+fDhE8uHTywfPrF8+PCJ5cMnlg+fWD58+MTy4RPLx/8EtF1yFCIiov/2tRMA/kcOjIiV//7bP5AxBgBSyuofq38FEdWhdnqQyuf/x4Ce533xo3DO//e+GiHE/+UPlFISUeUD6kcAYJxjz0Pt9CCVz/vE2snz3dXVtbkrRURCCk8I4QkgACAhhOvYJCTnTAjhuZ4QnvA8RHAdV3ieYzuu66oH2nUd4QnHdYSQRJIkEQFHMBCK0tORS88lKYkIOXcJA5x7CC4QInLGGWOGbuiaxjjnnDPO1b3kmqbrmmGYkkjTdE3XuKZxjZMEruuapjHO1AUwzhnnnDHGeW3QaqirVWaGMbZl85bNmzdrmk4ky382EJGmaUOHDtU0bcWKjx3HMXR9yNAhhmEAQCadXrNmrSe82traAQMGAMCn6z7t6GjnXCMiRJRSmGZg6LChmqb973Hriy6FRMQ4n3XTn9vm/CMaCqLrMuExT3AijpITIJAGoCFyICRgQAyIIaAEJAkEBgECEIIGQIRBIgIiIEEURvxHwZ6Tdy+ImPNsb7MUAUCXIApwZIjPSnl7m/qpETNPaBAiEgIiK931CjxAl2EOgQgImEAgQEHgEUkEgegCeMhcRMm40Djpuu259u5jrr3jz+Gg5TqOpmmzZt138003JxKJypJHRK7jRGPxp+Y9WVtTc+qpp7W1tbW2tD7+xJzW1hYAeHvJO2f+4KxMNvPtb33rz7f9CQB+//sbH539aCwW81wPAGzH7tev39yn/1lfX+95XvXK6xOrvFI49glergV1wQl1jqh131rEbm8IK/ecALD0FlV/oajeAyABVIP4cTrzT16clIguyue6JIUIbYA4ym8kQg9TZnA4cmhNOClJnQ+RAMrPfsUGoLKehEBAVf4ZEJReUUwGSQTkIcl8IfMPDsw0QUpABADDMMxAwAyYxUJBHVjTNMa5aQV4yUmSUnqARFRa2oiISII6dOmc6qEhM2Aapq4XdSto/af8xK89sYgQINbUmNHNIucOKlZUnj4EIvUzUTe5ABCAQBIAAFavAwRARCCBPEAG4HqSSOSE8KQkSYJAAAmgnAAhhStkRkBaCA2RKfZ2n4NKPCYqMwoBkErnJiBW+od6mUr3nnPexbRQa2tQ49J1GWNSypNPOXnGgTMCZuA3v/r1ggUvWJb105/9dMLEb0gpWltbkskU51y56JxxZXt0XWeMIXYHAQwZ58z13Ct+csXBhxyUz+cN04jHY1LK/zFztSuWQgAAiDU2uAScgCmrAQgEiEhEiMpoVT2ZBFDNsIqJKd1ZJCAERgSIwAEQgCMiKIIiESEAY0gkkUgj1AB4+fZhxSIili0jgjpkyXJVk1v9V1aYJQE4gS3BiERLlhaRiFpamltamgGgtq5OeAIAxowZPWrUqKoAEAhASioUCsVigTGey2bLjnm3xQIkSbKpqalfv35SSsXa/0nn/YtbLACAUE0ih5yVv0OsjtuxOjdA1feeSotgabGEyoKFAARIVIrSS5YIS7ePiBAQkFE3J1EtqdXnoh15jFU/97YQWOIWIjAbMRAJVyc0PM+TUmqaJoSnjl0oFqWUjuMEAgF1WI3xVCp11tlna5rGGEslUwxZ9ZoMQFKCqRs3/PaGWX/9ayqVnjpt6pVX/cJfCncaEwIAWJFIkmuMJBBWWXV1g6uWxZJfg1X3u/pWU4kqynYQgiRW9oaqPokIwLDM0yq6IFWfp7frVnlRGaGdvQsIwCXZjEfr63pFvowxxhgASiACYmWUl1hkwB3HXbRosRQSAEzDiCdiJcevfPVIxBhb/tHyZe8uy+az0UjUT5B+7lECZoFrQESAVOWiV7Ohl52gz+YpEZHyw8sOOZZNUNk9QiRWWdMQUEUAJatIsIPLUs0z7L30EBKVWEkADCiv8XA8/rkZFup1BgT0pFcbq7n44otisSjn/P33P5j9yGwEVn1qQOY47qmnnzp+/LhMJjNw4ECfWJ8HKxT0DJNEERhWBYP/1jfrHQZgla9VWpfKfMLuSI8YIDKE3gWpspvV89TVtC77e2VulUMKRFDrqzpDlustNTWfd+3EqIfFRUAkKQNW4JTvnJxIJABg4cKFj85+FKsNLhEiCCGOOOLw6ftNryRIfWJ9ZvXDCgZdM0DZYvlWI9HnUavsXVWMUOmXurMAUDYfgEDE1P3BktlCAKb+jaVEJfVYGdXRKzavymBRVQhRCjOo+0Vl9iQUDN0MWp9VwGGfmSFAIspk0tFoFADyuTyWTtHjYdM0vmjRYk3XstlcOByeMOEbuq77CdKdIxwKCSso0l3Y03j0NE7K7shqVnUvb0SAkhRNEIhKLENQDGJlg4UlRxsVewFUurXq5kJ13gyhHAwAlX6dlU5RiSHKlFRLsJTS4bquG7BzAqGKSHZ8bFRNkDOuSjdMJSCw90Oo68btf7n9jtvvsAvFfgP6/3PeU3V1df97CdJdUQElCoVDEA67UpS/HQLAStAHwACYyg1Ws0r9n1SsKi1xBAgqe46IyBEAii4AAoOKHwWKd66LniTGZPUaB6TCBUYEQISSKhaskhKVWG25ert4UkoIWFYwuNMFXQrhep5ruySrGQNCeK7ruq7Xbf6kdB3XdVzPdaEcWjqO47qu53me50khqsuRvsXq/ZiSlIahUyDgStJLXovKYGHZLaqO6pSfLHslJrqZjujlEC3BkImMbnisTw04sjsnr/IKnoDGOFoaeUnOLGA6QZGBQZJVp/JLTlM5/QkIpKgLABJ7pCIqrpyQkoXDJWL1/EullOddcO63j/8WY2zEyOGVRFQ0Gr3jrjvsom2YRm1tjXKb9hy358OPPiw8r66+Xr1y4YU/Punkk3RNU96jFNIMBCKRiJ8g/UxfVmNcBixHggkgut0JddtkLy+kl+dOIJU9AgRGzLGJ75Vhy8Myr9kzOn943PaNf9Uzr4CmIXhln4iR48GwuLj8FzlcDjCvhnLM2y2Jn0Y0l0lDkqrEEFHFJpdMJZYviTEiWVpRKyYTENGTkgKWZQVgB7eaiIYMGTJkyBDFbymkylzouj5hwoSKM66OVlNTM3ny3upFZZmGDR82bPiw3ibQT5B+9kpIGqIMBJxuH1r2jOpZmV6VPCiVJE/KyUeJEoCBm8eaCzZrYXPbErPpuo/jk3LP3Jd4YC6/tZVEBgGBAzEAkhAxvddWsFmP089uyEYPSm+5ZFBwdM767tbUdcPRA6YRCJBISKX8Re+UWSm0Y1CV0FdveCQxHLYCAeppSBQDPNdDRGTKoUIpZMkXxF4nAs/zlACLc845J6JisfgZubHSd6IMm3r9swin3t0pLxljO7V86jNVV4iMlby/nZ5ll4igdlERGoCHgw4Qq2JbVeJRVl7tkSpVCxOBg0RhqXfqiTM66mdkN14/KPjtLdzSuq4d9dwThTTvtBABqFBEjlgQEk0ppeAReP85a4sbsU7qCB6/NfNo38Zj3zOvXNt29SBPd4jAEExyIuqVEWUVo1W5sEr2ARFcIrIsrn6l6j7pul75t7JAiKgbevXN+6xbK4TQNE3Ten/binxYiha16s9Xn+5zjFyvj/Vy2tTHdnoo9cmdvlWh+JdvsQBAD4ecnWQmsTqLA9Aj6U4AoIHoYNYpnW6XbmwSNTOT3rY6HJPLLaxPPzwwgW5NOKulGQNyXHHiPu7qtWzU8OJ7r1uuJAkQj2nio+C6SwPm6II1NZld0ic2c4O1bzq5zAycsB7uGYxcqvgSEcv0keUiYEmQB1Ba0ZRL7xGQYfBqx5CIc75w4cLVq1cjsClTJg8YOEBK6bruggUvtLe3R8Lhgw85OBgMdnV2Pb9gges6nGmMMWTo2M7QobtNmDhx3bp1r7++kDFARIYMGRs2bOgee+wBAK7rapq2du26hW8s9Dx3xMgREyZMePWVVzes36DrupSVVDETnpeoTew/Y/9ShgJx/rPzN27YaJpmoViYNm2fYcOHCiEqxkmRdenSd99f9l5XsksKSiTiffr2mTBxQiQSQcQ3Fy5cuXKVoRuk4lxJmqYfcNABsViscpwv08cCADMadqiSiETqmaLqVcFBAgSSnMDWtFF244mp7X9owVqbmwLiIj6+LTSAC27DWt17yNBTGtMgk2GDWunPv6KXXjJe/KfB6yQD0ENoHZFqGpUxwyJQ4+gaQtbifT3tjUT99ExmU3v+iQaMuySgWjJTlTDFbmuFSAAMUADxQIABSKqkZQkRH7jvgfvvf0DTtLvuvmvgoIEAUCgUr7/+N0vfeaf/gP577b1XKBTasGHDpRdfmsvlGGO2bXPGUpnk+eeeP3HSpLfffvuHZ58TCJiu49qOEwgEEjWJ/WcccO21Vzc01CPiO0ve+dEPf5TP5c89/9yJEyfeessf5zw+JxFPMLXuEglB2XR29zG77/XyXvF4HBG3bt12ySWXfvrpp4Zu5HK573//e3/88x+7/RNN6+zovObqa+fOnZtMJtVCrOu6xvgNN/7ujO99FwAeuO+Be+/9ayIWLzqOFEJ6IlGTeO6l5+PxeMWUfnlLIQEAcMsqkmSqbkafVeLtTlVKAiCUgoUm5zTkuS1adJK79pZBhc3cGpqiDNpJK+pohZxnu6IjBYftpU8e62q26Nc3dM6hkF+qOy4k8+C8H8h8wrklmavZHUHWZIeHulxn2GZFD0sXXqkjFwmkyj5R1ZX1+uJKUQWiB2BYwbJSrPsDoVAoHo9qmq5pXEoppQSgaCQcT8Ti8SgyBgBc0+LxOOfcsqzmlmZd1zOp9KDBgwHA0I14PK5prKGhqW/fvh9/8nFXR+fDf3soFAr+4Q83AYCua4lEwjTNoBUEgCFDdps4caJpmFu3bhWexxirb2hAgoGDBioPjHO+ePHizs6upsamlpaWtevWLnnnnW3btjU2NrquyxjLZXPn/ej8eU/Pi0QiiURiyNAhhq5v2rQ5m05PnPiNUgIyHEnEEpFIuF9NIpFI2I4Ti8Usy/qK+FgEAHrQskuyK+pOiu9YuiEiAC4xF3LdkIxsCWDAk22B2mOyoUFecaMTD2W2vxn1Xm3SEbjkUxu6XjSK/QYH/740e9fP4C8/ot88VrA2sZ+ND47Q2J6tgq/XwdPI0Wh8qv7ENWiCNcT2mnLFD2vjM9t5i13YqIMltYymJKbVl7TjQ4mAHqERDu/EKZFSSimE0HRdOd2BQICAhPSEFNVHyeVyEydNnHX/XznjFX9I2Z1ctnDI6TOvvvrKBc8vOP+8Czwh3n///VQqFYvFiEDxVV3RZVdcdvFlF2fTmTN/cPb7y95raW39021/HDBggCQZCoXUMV9/7bVcNjd0yG4nnXTir3/z23XrPn178duHHX6YctH+/ve/z39ufk1NTTwe/81vf7XPvvsi4oYNG7Zt3TZk6FAhBOecCIikbTtXXnP1ITMPLhaLjDFN01Qm5ctOkKpbwrkNKiMO0F15xWo/TC2QDIFcRv2K4YOSQjKyClpjPjoo73Tl7YzdeX8DLqgJhR0z7hS5PX18YfED+Wljs8kMka5de19gY5fekaVRQ9w3HqOzD2d5V1ohacRducLqvL/OfjuUeyEM8Zw+ynFzDBACE7LBKSnIacCpql7Uw0GsXiFtIB4wd+5LEjCGW7ZsWb9+/cqVKz/++ONiocCQ7Ri4OY7T0d7R3t7e3t5ePoWKWMgKmAAwaPAgwzAkSUPTNa71KFYgAkAkEqmrrWtuaQmFgq7wdF1raW5JJBI1iRoVuHV1dr29eAki9O/f/5uHfrO2psYuFp9/fkElrHvpxZd03cjn8+ecc/ZBBx8cCARM09xtt92mTJ1immb5qkohbSqZ3L69fdu2bdlsVsWwXwWLhQCgGUYekHXnrnpYLKoUYACIAQgW6l+Mjc1vs0QhFVxzWyyz0mJ9C/wNM6wxzZJUYJTCeK291Ms1rwHdy8TjoBUwU2TAZCwit2ZdWO5tyedb+8VoFZcmWQZ4HeH80zEamxEvBEKtkB8aKqwO9TukA+PF9scbOJUF0RVL1VM/o67YQzSsAOysu0xKMk3r5htv/vMf/6xSCcVi0dANqoqhhJSBQOD9994/7JuHM8Ycx/nLHX+ZNm2qEIKITNN8Z8m/bv/L7fPnz+/o6HBsZ/r06aFwqEeSn0hFbciY67gqfUqAKoRU/9U0bcmSJevWrTMD5rDhw5pbWvr277dm3bq3lyzZunVrU1NToVDo6koCUDgc3nP8nkKIW//wx/aOds55sVhsbm4654fnKMtEBFzXrrv2uptuujmTSh940AF/+sufv3iJSdtFvAJd1z2EchMLK9sGBiCr6zhMFQY1DO3mWKYwdyugDBmNMOSkNanHamTQwIDL09yavE20UuifNc89Fn3rveI5WwKanevMQT2KDKERYv96S5+3OjhwO7s2iOKwzZIZznM1aArOyNMLjVdslqtqLQgkByCapPdxWMQjD5ERyJJCrFtOWqaXYr8HaOzMyagQsFAo5PN59Yucs15raylHL0RXewcwdBzHsW31npTSsqxXX3nl2WefjUajnPMzzzrzR+f9yPM8TdMqDKdKvgqx5FuUdG1Y3fD44gsv2rZtmYFJkyYxxqZMmfLaq69t3Ljh7beXHH74YbZtO65DBEHLCloWAN51113LP15eV1Pn2PbQYcO+/4PvVySKyDCXzRULhUw6k06nv0JFaGWxSkUSqijuSj46VGnvJBA6TAbJaHF5wao7PBPZJ+1s0rfe2iCWhY2Ih2lNJ67tVmATU3JhLNbpvfiBe26N1plmh02WF31L/8Mj7rsvu8EoLVjhnhYPamGAvXIBnqXn6+wUYkTA27Vb15uN53XU7t9u6EKmQ7qVwrgLmwOke8jU/cdeYWHl8ZSAuDP3QkkqbNs+/8fn77f/dM/18vn8L35+5epVqxC7FQ/qM2P3GPvzK3+m6ZrwxNBhQyvZS9u2R44aFYlEli1b5nnevvvuEw6HCoWCpmnVyvzeogmo7hIBTdM6OjrfWrSYc26Y5iOPPPLmwoXLlr0XCgbzhfwrr7x8+OGHhUKhcCjMGKbS6c6uLsbwtNO/s3XL1rfeWrx+w/p4PFqSKCIgoud6F1580ZSpk/P5nCpAffES0y4jFudcMuxxi8oFYyhrq4hQGkI2FLUtCdlm6ZPzvF5umR3rejJh5lFPSMxh4NANcnlN8uF+zly3IctdiZBjYoJ2y0Vs3CQJGk0eayx6S9vyJLgrKR8E4bLkLf01QC3kBI7blJ/bzMK6kQxtvsrKvJFtOK6DB6XXaYqMLupsTRKmdZXGxbKosJTiKmuyVD/FTsuigCCEGD5s+Phx4wHAcZxwOCzKnTyVj7mu29TSNGXqlB6/zZAxls/lDz7koNO/e/qh3zxsw/oN1//yV3uM3aO5ubl0Pd2ysR6nLb2JpLKjiPju0nfXrlljWVahkH909mwhpKHr0VjUNIy3Fr7Z0d5eW1fX2qdFLZ3z5j49derUy6+4AgBOPeXU5R9/1EtwgUT7Tt9n3Phx3c7kV8PHUl8cIyXzLIXp6rbJao4xxCJg6IRtdF84/0KNMUCu/F1fo08xOqHovRogDwQHZ0uQ5ZBAYlZLOyxWo93+HXbE0cLQBGUYSUQmJk3zxAR5515sxRyZTwmwkBhzDM/YEGDIpAQACuyWzaXYJ5f07feLtuSbhkgbkXM3eS/VuB0mWgJk6TIrsnrq9mbLFot2oophCLZtq/Awl8sRAUNkZSqow5mmuXbN2rvvuptr3HGcUaNGTZ06Vb2rMWbbdmNj4xnfO+OX1163Zs2aG393001/uLFUXO9Z5KkEqqyUK+l+8bXXXrPtoqbx1tY+EyZMEEJyztauW5Ps6tqwYePixUtmfvOQo4466vF/PKHp2mN/f4ykPPCgA7q6kmvXrrMCFgCrbv/nnD/0wN+WLVtWyBeCodCRRx0Rj8e//ARpT+UCkFJLIfVsx1EqFmAuiw70vP0ynW+F0o+31uyVaZ7ZsfVnfRkiAEkGzju1nJPngBf12AHZs2YW9FqCtCcIGfeQIwHJFGecTvs2eDOK2+YmvRejMsc0MopvtIApiBFD8tYE607eiJO8zXPrYCvoA4uJSbntTzcBR0AJ3VLXbseovEIS7UzgKjzPdT0pS4J3VcDxXFdpY9RBpBROsYiIK1euvOKyK7jGU6n0ueedO3XqVM91heN6nieFJKLvfOeUZ55+ZtFbix566KG9Ju/17W9/y/M8z/WUqKb6O3U913Md13HUU6rreiqVeuXFlxmB8MT1v75+//33KxQKlmXd8Nsbfv+7G6WU8+fPP2TmwftO3/f8C8678cabEPCee+594IEHpCRN0xzbTSaT6viO67qOIy3r/gceJJBCyNpEzd5775VIJL4CCdLukKok5Ss1jvZsF1Tc0rjUHSuwh8i0eS0HpiPD0xuubvG2aDzigaINE44mjen5xm9mrH4CckymgGmCowQSwBAJgTFApBRpIa/1++nijK7OpxPFN6M6J2CEBBIlA63zj00Dbt0cGF/o/GuLoLRhCRDlBlks6Ql75LRgRzvVjVg83tzczBgGTLNin2rrapuam2tq6xhT9T69vqEhmMsxTUMEzng6k66tqQWAQMBqaGwsFArhSBgRI5HI+Recf8WmKzwh7rn7ngMOmBGLxeob6guFQqQqi4YINTU1jc2NNbU1amgAY2z58uXZXLapqbmppXns2D0q+YV99933748+5jjO6lWrk8lkIpG45LJLBu82+JGHHl67bp2yaoyxAQP6T548Rdd0AIhFY03NzZFotIGIcSaJQqHQ55Qp/z/48MVnN0gpdV1/5rkXNp530RFRK0NqialKEVGpDs0YCoLGq7aHGribAnNksu3Pzem5MS3ugQuIQHkmhmWix3VGBwgmuMhzyRB06YFEQYyT44LOSBIJ0g0uQHAUoCeKyGVytZX6Z532XhBMQgnAyc1ofI/sgBs35l9vKbQ7scntGy7ZjTo05JJKzjB2h4REBBBg2tupFLv+2iOPO8Z1XMZZhUPpVDpfyAOAyk0rR6Szq8tzXc54TW0N59x13a6uLillJS0lJYWCwWgsWiwWk8kUkQyHw5FIRJ20vb1drao1NTVqBIaUFA6HotFo5aqSXUnbcThntbW1KgLIZrOZTAYRdU1P1CTK/ZsopWxv7yCSDFmiJqFGQmia5jj29u3tKiPKGKurq9N1Xa106VQqXyh0WyYCQKytrfni4yR2mcUSrlfqMSXaiWwXEIGE4GBz91PGRhaNAG6+ozG1LGwOcOQWznQCwbyICJ7YueWB/ttBrzu6a/3dIT4gk5ueX/Wb2oGH2XJ07pSL8Hc/1wbl5KI7o+N+vDWyubb4Qu3AS7bYL9Sk1mrxCz51t2i8wyBNMhuhvpjPGuuvGNj8w82BMcXsh2G3S2cSOEdEqfQ6Oy7oCDuvF8QT8Xgi3kvf0lBfXxELKGFWU1PTTqUElmUFy+LBigahsbGx8nACQEtLS68PIGJduRFNvUhEkUhEyeqrdRbKmDU3N/WSyriuq2l6a2tr9cWomg8RxROJeCLxn5CI7bLMuxBC61bz9W6xIkTpavbwFLba6fvr0+8GNs+NpN6KNpy5DRxEiYAgbK71y7aMTYYMLdCcbthrs6XrLUOLe07O9ZFsxKCO3Yd32bY3dEDnXhOhj8VGjSkMHFMI6G7tuI3W0IzhypY9UtbggmdrxIA4YAevOXajdM1NdzcX00by8QYChuPSJD3o1VVbpo8E5ATSc3eM+x3HKRaLtm27riuEEEJIKb0yiEgIocTHlRcrv6K46Lqubdu2bYsybNtWYmVl/yofqFatVI6mbJtCr/MqWksp1a+r1ysirerrVG9V4gNvZ9glwsNdVoR2bVuTkpABekDV4r5Sf5XwWLjOqzljffLy4ZnHw501ctAF20WXJtabetwDWdLGgwRNRzKABNN1TpohBNMCDDkISQFT44xJh8yARhqSR4aGQjKSHEySSIia8pWISbQN971w6yXrNt7fumVWq7skUnfOVjJyXQv7GtFKT0f3kk1lbVkmm93xr1TDiXaqauoljqu8WP0rnyOxqnx+R8lXNe97CbagPGJpR5kXqYT6jk/OzmSDX10FaXkpdFWFiajU/kzVHX1EaJL3cczqk6bTktsXaYERueBu7qbfxbkhCCRW9OjE0SvJT5lkKDgRQ4kMwQMmJSASCeVqcxCMCSBJ6BATAoBAMCQJEkgiBqXzVhSOTzeduG37nX2N6ZnaI7dt/G0jZ6zUzEOldHYVt0gj8gp2tcFSeqzH5zzx9uLFActUSYpQODx16rQJE78hhGCMvfPOv5564inXc/efsf+MGfu7rqvr+ry581579fWAZX77+G+PGDFi5cqVD97/N8ZKSQVETCTie++999g9x6orWbNmzQP3P+h57siRI0848YReAf/99z2wYvnycCRy+ndPb25u8jxP13XXdZ566plFixYnk12GaTbU1U2aNHHK1Kk7fQy+ZtJk9ai7jm2VGhWwpy65FBEyjbwOVlxhRPZNu5YZGWUXVuu5DwKGKajc2CBRUrlbSxICCSLBVFtNeTAMEUmQSECERIikMgASSACI7pFFBKhLd6uVeSlSc0omtJsbntght+nuyggzZQ8hPlC1iEwHFI7dy8FCxPnz5997zz01NfFsriCFFwoGg6HwmWeeedkVl3HOl7277KabbnYc2zTNAw6YodKYL77w4q23/jESiYwbN37kyJGffvrpH/5ws2EYnidyuZym8UgkbAWCZ3zve1f89HLDMDZu2HjrLX8oFgtHHH7kiSedWH12knLOP/4x9+l5jfWNM2fObGlp5py3bWu79NLL5s+fXyjk7aKNjCHg4MEDnn3uudbW1i+3pWyX1AoRAOx8PqbaqhCwkhuqDFsgQhRY1DILg+GRmdo9GATZhjujYmiR1puQ1UgrMUISA5RIJCVKEEIKIak0V0oyQAJJHkkJUpS8Iir9G0hKJoEkAgMCYEJINqkr+0x9eE+v5qCtaBWSr0aoTWcBIqEcv+6ZSuXJOKQB5XdWLwuHw3V1tcFgcMrUqZFI+I3XF9q2e9ttf5k+ffqUaVNM06itrbGdolXV6RoOh+vr6kLhkGkaamWsr68joubm5v1nzNiwfsPrb7xRLBTuu+++Y447evfdd9c0raamxrbtUCSy4wVEo9G6urra2hpN48rFvurKq5988sloNDJo4Kgp06YKz3v1lVenTp3a0tLypTcq7gJiqct3s9kAogq1KklsKiW3JAGhBM6w+HIstYcdm+xtuT/mtBvNP9je/usQRwKUKnvPOCASY6QaPpkmgQEiGDrZjEtCzkhIRkxqDAgBGSEnQGQaMYbAy4svA5nWQtO7cEmg6/76xl+tK3wQTM6pZ4KR7NXNJ8vDlIgIDAI3l6cdW/WllJJc1zv99NMOPeyw66657o477wTANxe9NWXaFCGlJzzP80SV3y2lVIMzZTmpT0T5fH633YZee921AHDgAQd+tPwjZJDPF9TnhRDCEzu6z4QgJQnhCSq9u3jR4nnz/hmNRRsbm+6dde/w4cMBYPOmzV+Rabm7zMeiom0wkCBLjYWVQQul3CmTgrzRXbg2uu3GPrm27fnVrHZiygoD5RECEokBh3wqYLeF82nd5izWZuTyOuvUcYvRaeP2DtNLgut4mS4zZRspW6baddhsZnPMaw8V2o10hhW3BfPtAcRKIZxBUYsd3bXtoYZt8xK5h5u9JGqj0rDWQMkAe9QKSzceQUOUti12KAZTOe9lGCZjPBgKkiTGeWUeAHY/TT0k/wQ9xjtpmtbV1fHee++tWL6ifXu7YzujR48ZPHhQ98d3lgXByv/KfZovvvCC7boM8Zijjx4+fLht24yxltaWkuTmy25U3BUWC1ECeOlMAFFC5XuhkiAZCAmBEdi60eQmTlrf+afBqWejxp55a1ROpE10AS0EAMncupk5jfOW07cILg3QBp+/WeqkcXPStUkjapomvH6HrK81TEkH/iIbCJt8Tyc+vCvAYw0zM9FpzAQrcWRn159i4DHSCBnjbcHgfhlzz2zymRjYsvbSTV4XZD9s1SxPRYU9hy4BAWiAslgUAHrPfBaVx0csfGPh8hXL77tvVigULhQK48aNq7r51FPcXzVlsGzDAoHA++9/cPihhwkhAHDM6NF/+ctfamtrS98kQs+ZltVnL6XZ1KDV1WtWAwDn+shRI5VLxxhT6e6vQvvrrrFYAkDm8kbVWI7udENpwB+xIDkv1OkznH6/+XTDfU2iQVhD3fSb4YIpYyCJuKcJY0QHj2BoN0IA6UJ4SBaZBqCH6hwQBnh8eC2CR4Ay3OoAcGAFQEGeZkbdEBMSKDLES2phcjQA8nQSbSaaHfH+lAtB32vXG43FdRf145w+q8WeAHTGIF90PddA1rMDjJRS784777LtQsAK2AX3+BOO32vvvVS6iKqVpmVtDpWlWN3cJDIMIx6vt227o6Ojra39vlmzLr3sslAoSHKn1qrbYqJa40spKKGGKemajlVV8K9I++uusVielKJQMBhWj0krh1ml4Y8MBBes42+1fa9q7/OtdjcntDAmV4S1mZ3aoqib5kznG27o28YBPVAueRhhbjH7eNa9osZ4plBcKcgCzEvRivrhUf22jvze4cCpoZqcAA6IsuSBM0dHDb0iaQdvdtbXi3auR+y+38lbQ4ptD9RQm4khSZXwEXuZJdIYo0I+XyiGw2ESVWJ2RADwPDlo0KBEIm4Y5owDZnz3u981AwYA6Jqm5o06rlupsRQLRQDJOQtYAfXEMcbsQmH81HG33X57OpW67NLLXnnltdv+/Jfx3xh/+OGHS5KVcTtl/TuqZEfJXkL3AJTa2jo1M2LL5s2qnqNSJ5qmfRVGQnxRR4+IGKLruTKXMxiTpc6WykwhCUiVocQ8KO339fYnglqdsPpA5o1E7r1Q0zQHY0AeaCSsrQG2MQDbDNxm0FbT3Br4dJ35/AqeX8uWrtbmLucvfKw9+7G5dBVmN5lzl8PyVYbeFhJtAdlmyu0mbAvwNkNVwAVQbO+U1DD1ao3RP20NzmcWB1LzE8wCpeXBHZ9sBALSOEI+n8/nd9BFoaqQXHTxxXOeePyhRx760bk/soKWGkna3NKs6bppmIvefCuTzliWlUwmly5dGjBNzrT6+vpKFkQSBcxAbW3twEGDBg4aqGlM1/Xly5eXVjpCIqkyXYZh6LpuGEYl+0rYndHda/JegKjp2pzH56SSqUAgoOu6pmnJZPKrMHNr16QbikWbFYo6MtmjxQuqplUBEKAE3WDphxJOhxY/JpXvRE3KyMCCXefASgOQuC7KKycREKKMWMKKgWFRFFgNhzgDJinM0bCwNsoiYWCG1DzBkDFZynUREQjOwl6kL2UsKBa4nZfp5+pTT9awIpAuQZTnd5Wm33TLeyQQZ0zm84V8YUfDzBjnnFtWwDAM13XV1geq6DZi5Ijmpqa1az/9+ONPzjrz7AkTv/HmwjfXf7rGdb2hY4epyX2cITJmBswNGzfOmjVr9erVT8972rKsYtEZPXo0AChlVyAQXLnyk19ed70QKmWAp51+ar9+/Vh5nwS18O03ffrgwYNXr1q9/KPl3znl1JkzD+Eaf+P1hS2tLdf/6pdf+oK4a4iVTqUom9UYL1KvLvtSHINAEpF5QEFHxFj2HzWp+aHID7YHRmUQOG8VngOahIpOEADQBQJu57VCyrVDwIEkkRAoCIAjeZDKUh6JBUEK0BgSL0+wYeDlGRtkmwFD7+cWUaw6Zxi2G7whz2Mepkw146jsD3czq5R7Y5w5jm3b0LM/zLGdbDbrea5tO6owV6mleJ5XX19/xU8uv+jCizPp7HPz5z/99Fxd07nGWlpaf/6Ln4XDYeW5Z9IZ3TCWf/TRhedfgIiGaTLGTz7llP332x8ASIpMJmsa5kcfLX/nnXcQVTUCDjhwRv/+/XP5fC6bywXz6ottbGy8/lfXX3DeBVu3bn3jjTdeeeUVznk6nTr++BMYY1/6argL5rwDQLFQ1B2H92qEwuoRHIhIiOiRDJ3RFqBw7pmarrkNiUOzTBBFRb7ZDUvJ8qjmWzGHOkdnOgbRqA44YZ0Ibued68El1C0AlzI5gjibNgzHD6HVA5LZSLHp+ZpgFxcaIYCUlG8uRps8RlgzsWv1rXWhGi/67XZ3QDb31wajA6XR42mWWKXRB0BEw3HsngM8AGDI0N32nb6vrusNjfW9JnOocOzwI45obe3zyCOz165eTUAMceTuu5988slDhg5xHMcwjGgsNnnqFEVHRDAMc8CAAZMnTzno4AMVfWPx+JSpUzTOUalYS1kbiscTALD77rvbRTsaiwZDQVUU33fffR59bPYjD8/+8MMP1OibxsbGbx3/LVXS/nJjwy+qx1JirCXvvb/oe2cdI0Wu3GVHpf0eyqPQAJCIMwSHy75en6vbtITY8mzE417fQ7Ib7q1Nd8qw4Yl59ZRwwGHFpLZqr1xhuGd4BvFCje4uWikffEOs28TMIB29Oz9yTGC7RrE4iwWRmW7obavprZCXcCmP2L9o7Z/N/csa8rO2zjcSxTazaWYbRb1Nv2/yXoyzmJCCeqhkEFGWdN4SZBD4M447+LZb9p82VclLqn0s+GxJeGVWgvK7KyLj6oMwhpWqZOWASpuAiGotpO4ebCoXWmVp/ITysUr51tKXDwCSpJTEynT/KjjvuybdkM/lueMyg0FlrGMlj1VJOgNKgWhK+an26S8aWi/e3vzNLmgzIKcX1sWNUCZ+RGfXK/XoanbEdo5oa+ojPGTCYyTY+gzr34fPulS8tFJPeJ6pe12R3MCEaQWzQd1xJIqZnelifXh13BFUf0SKB3hyTUgkWWJMARMZL4nbftvqvBHS4oK8qqkSpSad6ol/CIgRKZ18fkfe9KIU7uDdu65boaCSwUDPjeOkpF6ypx4zaohkaZWuCEO6zSntIJlWnbFKW6H+kl6qmK89sZyiHRASgJeV7+WpB1TuAlFN0ogkiIVIbDY2/rI+fmQ6uqfLg3ZkfFd6cSDUXzr75rvmxb0GCnOurUNO2kdO4Z1C8ZBQ4PWt2rsbSHj2NilaAsEJaL6+sauvqU8M1mlCYNiVAWbnNGtENjHJ7pjfGtg345nA8pR9JdA5t1au1nlYSoE9J1XumM8iADSFl+3o2JFYyg6p3U2UHgt6blCofqw2G73rQj1XKMawV2BeOaZqRxZCSCF3nI5UyYiqptOKjcSqsacVZ/Vr6mMBADj5fEhK2R0CYg/fhVCNDZXKtfeQW0QZc/ufmzrqBLOkNSpZd2AnK7DgWLtzfTJgMffuIYVoISppQVfHjW04pCX8tFN8oQBRiUnCfQyvT13sp2vc42sj+7Q0Zz0HMpo2Mgd7pIKtDmp6bFK64ylYedEAzWNuGzct4mEPXOzVUU/YPZ+58udIJFOIto7OHaNCpUXJZrNCiHA4rJYhRaDuVUnKdDrNGQ+FQ5WVTt3yXjaPc14q4pRfrBzEcZxUKqXreiQSUXSsrtIoqSqUW2cr2tRqr4YxpuQAX9bEwF2zM0Wusysohawaw02VTENp7CioLRyk2hLAIRkrWIdltK6g2B7IfVxXDCUjY2y9yWH5cMO5H3chZd8Nspgbc2VIQ6vOC2exVmcxRlxAWKNI1K5rZA0h4tEc5og15/pdtWbTrYPQcoXgG+ZG7XdCwVqb1+QDB+QL7wX4mqDUifXcDqN6nnOp6kwkgSwCN5utPOwV2dbs2bOfeOIJlSiKRaNDhg499tjjxo7dQ4n4Usnk3Xff/daiRel0Wtd4LBYfO3bPk085uaWl5fbbb5//7LOGYV7xk5/suedYtWD99Cc//XjFxw0NjVdfc1VLa4uScH3w/gezZs36ZOUnuUzONM1EIr7/jBknnXySZVkVwYKmac8///zs2bM3b96Sz+dCoVBzU9PRRx9z6GGHKjuq6/ptt932/LPPGYZ5zo/Omb7f9Go/7+tBLPXVp9vba0BQeTOknqXTqh2SKq9rRFkdunj9SZvMOiGTWvKjWH5dINLkeelQ8b1o6883rL1okOhCGfdyy3g2hJykJ0kQqeGM0mbt29AZQJKDNL0BP9lA26O5dZHWo7tyn5ihPoX+h3bwuoJny7Z5EXerhRxhB7V09ehKKDfqEIAJJWJVe+V/vPXWq6+5Rg2+UntGPf74k3379hs3bk8A2Lhx4zlnn71w4ZsAIDwPAFzXW7jwzcOPOKKlBT5e8cmC5xcEg8Hv/eD7FXdtyZJ3Fi96q1/ffrlcDgB0XZ837+kLL7iwM9khPEGSSIJhavPnP/vqq6/e+sdb1RhczvmNv7/xd7+7wfOEa7sqLDdNc+4/51100cWXXHaJkgStWL78ueefCwQCRx1zFPSeffL18bGynZ06Khmoktj19mp7NVoBAANmL6hZ93Y4PjMXn1qomZAGKUWRNZy5JvtpoE7L9PnxlvW31V5w3vb+rwdj8430SmA6EAFnmM6SrKFrz8RTjk0V/1LTMj1pDbW75jfWH9MGTV601o6OIG8771oQ6Xw65n1qaWFBTKKkqm3lei9z3S3RBCaCm065RBxRSKnr+ubNm/96718ty2pqavr+97+fSCQ++OCD5ctXHHHEEWoJu/IXv1i48M1wJDxi+Ijjjz+Ba+zZZ+YPGjRo+PBhABC0rEg0almWxriSqCNiJByJRqOhcrPX+k/XX/nzK7PZdNAKTpky5YgjDt+2te2BBx7o7Op86sknR4wYcfkVl2ua9tJLL//+d783zIAVZEcfedSkvfZ6d+m7//jHHMdxbr755j3H73nggQcAgBW0orFIwAwauvG19LGUtAHz+SCgKIfR0Pvmdc/br2KcNKJSOrzrkVhqfizQxwNDuttNkefGHk72fS88Nh1oblx6T7/Tr9pCB+XfuUFftECyBBdZUTdY7Htd+vDR7JN7a3IeDtknn13W0LVaz74W7/pnIjgoj3l020y5nWmctLgLQsm9uh1a6rEG9kjoSiKDM0il8o4T03XlQqXTmXy+wBk3DOO4446rq6s7/vjjs9msaZoAsHjRopdefCkUDjU3N99xx+39BwwAgJNPOdmxHeEJrnFJUggppLAsS826VefzRLf06umnn960aaNu6nvsMfbOu+5U3tWAgQPPv+C8UDg0b+7cs846K1GTeOD++6UUwhMnn3zyr3/9KwA4/oTjA4HAHXfcKUk+9vfHFLGkJClICPFlJeB3wborAQrFvIHEoCr7UmlfL5+IqpujS6IIYkwGolJ30N7Ec9t1CrvGoALmxNYFNYWNVut3N6dCzrJXDYwXf/pzd9oIvT0lIlze9ItQdKiwP8a2rWLwj7fYaWh7I6wVIDEmE+xTtLcEspt0yEgj5DFDMlEuNBNWjUDtOWWpKjyURBpj6Y5Oz/Mqmq3Gxoam5mYhZNu2bcccffRdd961ffv2cDisgrh33323UCw4jr3ffvv3HzCgWCw6jgMEpmlKkpUqISI+8sjsu+6667bbbvvDzX/YsmWzrobMIADA2jVrENGxnYMOPjASieTzeSnk1GlTWltbJVFHZ+emTZuklOvWruNcCxjmUUceSUS5XI6IDjr4QDNgMM7Xfbquq6ur+49E/OwO3K+2xZJEOkDfffd56aWXTgHqqD4ilRee8k/VKjis1FTVNm0Dc/EZydhwx6gpMu6Bx5xtofST9e2bnX+9DPURo2VPdsfVOPdZOXF8YMBI3vlB4JF5dv5jb7dgWJ/ZNujk1WAS2czJBLKb9LbnwmJxVC/PcahsgCJ38N3LexyozBF5RGHOX7JzNTP2qwkGPSFUVj2RSPz4wh9fcvHF+Vz+03WfXnPVVQ888MAll16ilsKOjk4EZIwP6NdfiRGUp1wZz6dkC5xrDz7wYNG2VVK2trZW03WC0uy8ZDKFyA1NT8TjpVwrQjgcbmluXbtmbSGf7+joyOcLxaIDgFbQCgRMpWVQh4pEY4XtbV2dHcmuZCKRICBAtmMf3teGWAxRCPGtY4/9xWtvLFnw7NhYbVoIriZcVO8hCFCZ4U9QFsUjIimXTLL3o+kPQrm4qzd43AQCXlgZ1jI8MqpjymSvebSb7ZI335uf8wY/aFXh8nrRbxCfvr+5ztQzryY6FtSEhuZZ0KUc81Ka6OCmw5khpezpUPWcpIblJ6OcviUhweR8U7rrw2+Mv+wHZ0JVa57rukcddWRLS/Ntf77tjdffcADWrllz/rnnRSPR6ftNdz1PJVt5VQNxua5SORcSwR5jx9bV1RKR8MQnn3ySzqSgvH0B4xwR1KJZSUAIIVzHUdNIVIaMcwaAleQqlPOiUggEYIyrZv/uvWfKW81UZut/XdINSJJ0jZ15+aW3rFgxaNs20wo4QjLc6Xzbso0upwlL00OAmC4YgkybTqfFgDFAPqkj+M3k8QPtzq3aR4+bv3+CPbpcr4vhX1/1Vr/n3nwCD03OffMcL3dcR8eL9YUFMZa2EIkxaXAiU0jqnvOh8v+y1w6DpUy2eqaRCDgysotP1MS/deWVNZFwdYiu8kYTJ078xjfGv/H6wltvueVf7y4t5PNPPP749P2m19fVIYKQtGr1KlUArmSkhPC6ky9CXPGTyw488EA1+ePbxx2/ZMkSzkpzGevq6ohISLF5y5bK0JF0Or1hw3pN00LBcFNTo2UFrKCFCPlcoasrWZFhbdmyJdWVZMBr6+rq6uqge3Mrqba8q6Rt/2sGbBf4WMjQ9bxBfVqPuvqqvxEGHJcxTjtM+wQARljeKa5q29HSkGUCIuRCC3gY8ETELrokH2246cymwSeHP/xTrGOrGakhg8loHA20Vj4R+cbp+k9Prc3e2uptAD3kclMwS4Be0piX9pBmssc20Gp+GgErbdaMBLKUVUcMSu9hx97z8ivGj9q9wip1gzdv3vzc/Ofa29sBcNo+075z2qlqOHu+UACA3XcfpetGMGAteO65t958S9d1XdeTyeSyZcts2+l+mkgahqFSYt0qq/ITOGbMaAAIBcNPPfHU+++9HwgEisXifbPuTyaTQNC3b5+W1lZEHD9+nOu6BHT33Xe3tbVZlrV9+/ZZs+5jnLvCHTVqVDnMRLXBp2KS67qO4yiWf53SDWqx2G/K3hsuv3TWtdedEYumEUt71ezE9CKpbGlJcVc9Vq+02Q7aqL+d0DTozGeyXCbqpFmQskiITEriOlhR8NLQ1q6TF3ZsVwsQYxJdLI+/Ky+3hEBIrNu56945p5S4QpJSIMalfDKTTlx44bePPrraVqk0xKZNm885+4f9+vcdOXJEOBRetGiRoRmZTGb69OkAMGXq1BkzZjz11FME8pyzz5kyZaoVNJe8vcQMBB79+6Pq2eOcc65B97pEyIBrnCFT1v3gQw6etNek1197naQ847vf+8aECW1tW5e9+y4Auo5z2ndPV8OSv3vG6XP/Oa+jo+ON1xeeeMJJo0aO/OjDj1atXi2lrK+tPf3009QFq7ZYywree8+9T8+ba9tOsVjcffTu11x7zdeJWCXpiOueesqJt6XTD95y6ymxcAq46iz97KVdKU57TDtCotJGT5ZHjJmO1DmQp1bNSs6CSQkM0dKBGx5qLhIvKaBRsYlBeUpROUooGcluQXrZDRKIccDnMqnUqadddM7ZO21xCVgBAFz27rJ/LXlHSgoErGDIOv27px19zNFCCN0wrrnumkIh//rrCzdv2nL//fczACI5ce+9FUHz+XwymXSckjZQHT+dznR1dkXDEVWZjkajN970+4svuuTtRW+vW7tuxYoVGmcBKxCPx3984QXfOu44tcIOHTrs5j/c9IufX7lu3bp/vfOvRW8t0nU9EAj079f/yqt+MXLkSCXRyWVzXV1dQLRw4ULP8zSuZQuZjh3qVF8DYinbIzzvhz8864+C/vanP54cDWYYL/XZUakFpWfuu5KfIFbadKRqCx7JgBAkIKAARGRKVFraKVcFmRJAIpPlKIAxqqSqQCKw0m4n1CPD3l1UJgLEuKRnM6ntp33nxz+9ghHJ3nViJoQYsttud91z5ysvv6LG2gYC5n77Td9v//2Vfy08r2/fvn+9b9b8+fMXvbVYeB7jrL6+7oADDwwEAkS0zz5TOWO6rvXp26dShz7qyKP22GNMTaImFo8pB3zQoEF/e+jBBc8vWLxoscrvNzU1HjLzkJGjRql0mgpRDzjwgNFjRs+bO2/FihVSSMZw6NChhx5+WHNzs+d5yj+bus9UxlkwGFQrAiIWbXvgwAFfGz3WjhIAFRzdfsc9nTffclpQE4ZZ9CQHKBfqWG+dYGkHXexRviP0iKIM78nmfp0u/D0evs/zXizk48i6hNjHNM+MWadsTR0filxVE01Jh5d4WpkuijvSqJcARhIxxoKe9898Pve908+95BKDMfEZc117KftKabiKjqo832HH31WE2OnIkG4le3kuklKl7niQXm3NlcigF6pX8M/aweu/JtXSdjFPEYlIeN7ZZ31vdl39Xb+94bhssj4cTQlZ3tWUANWmX0hMjf5TwbiskhwQlTLl5Twmse4Vs2SeysWZ7vH8uFMaVS18UB7CTYIwwDW7kH9Yw/hlF1/0gx+AlOKzpwVXxFW9Vv/qvishdtLBrO50ZTZQtaylcsAqGSD7nIP08Do8j2QPzU8v6ruu2yu9oipt/7VStLbrbSAiEXmue/yxRywePODha67f+6MPJsbCOWAOSQakvB3EHmPWS5vtoiy/gmoXAlTTQnvGAAxAdqfxy3mLnkqeHVhF5eUPEFkEcU2ya8GAPtOuvPKAffYRnkf/rs/z394S7LUF9L97a6cH/JyD9P4Y/0JX+zVIN+z8z2bMddyJY8dccO8dK048+f6iWyzkY4wBMJWRJ9nDm67eYF5tPN69DT2BBGQlqURJoCvLUyKgbL0AAHZY76qddEkkAAKMM8dZkEu/cciBJ997zwH77OO5Ln153cO7pFXrq9Dv9R+3WN2c5cx13YZE/JKrf/rMlL0fuu32scs/mGAammnmJBGUmmXKPkppEx5U1ohKaZhy4gCrtuVBRCwn8bFcilPyr24pX48MOIAECCCi464oZpYMHjD8rDMvPPJok+F/X6hUvf8RIurlOvcXicc551+1fcv/s9+p8gY8z5t54H4XzLqr87wf31fbsCyZshw7zBgwLgFFZb4yleatl1gFRCqsAymr9m4FFeypklH3DuQgq6xU2URJJR82kFueWJNKPRa21p75vZP+OuvYo4/RSf5bVlWEnb3En//29c/Jceu6Xtm5xHGcxYsX9/q88uVVVr3yYqUresfFIZvNLliwoLKdROVoX25rofafPoH6a13XrYtGfvCjH6w64pvPPPTIR8+9MHTDpyMMHrGsIjAXSALxynbzKNXqRiXZAUJpEi1Bjy3qUTliUhk/lb9HSYDqS+XILETHLq60CyuaGunoIw486cQxw4aVAihk/9ZWaZqmBudVR1Vq4r56vRIVVvTHSk2q9urdcQ9cJUM96KCD1E6WmUzmwQcfHDdunAriKiGk6suolj7rum7bttq1q/qY6owlRUOZuEoPCF9quw6/8sor/xtZDUQ1/Kk+EZ80dXLzQfuvamp6fXNb57a2WNGOMzQ0LpCVn1AiAolgAr7rum867pFmYAXIVZ4bQCwSDOJ8d9OcmyuO0s0ppm6TQEI11U8CIDITuSFkplB417XfbG2Wp5yyz+WXHXbMMY11dZ7rqkTD51RjlbgglUo9+OCDEyZMuP76XzU3NW3duvXtt98eNmzY5s2b58x5fNy4cVdeedXw4cNXrFj+4YcfDhkyZOnSpYsWLRo+fNhPf/rz/fbb77nnnsvlci0tLRXzo7auvOyyy9vbtw8fPjwajbquO3fu3FWrVs2e/feBAwfU1dVxzv/1r3/dfffdr7766vPPPz9hwgRd1znnzz47/6GHHl66dOmYMWMMwyiN+SNSgeSKFStGjhzJOe/q6rrllluWLFkye/bskSNHxmKxL6vB8L/nXlTm7HiuO7C5+eQzTjvrofsSv7vhxQMOfDwQfjeZcTLpsBQWAwQmEIXyt0v2XFa2Ay+X1yQSSAIi8og8kARoIA9KcHO55emuuTpbMHkCv+7qk2fPPv3HF4wYPNjzPNd18TP2A+91qUKIUCi0atXq1avXvPLKK0vfXbps2Xuq8BeJRD744IO1a9cuWPDCe++9t3TpUnXAaDS6ZMk7K1Z8/PTTz3z44fIlS96pbFWq/Cop5dixY/fbb/oZZ5zR1NSkUl/JZPLUU0+dMWO/xx57TFnQNWvWfPLJJxdddFE4HH7kkUdUH86cOXNGjBhx7LHHqi27FFPVP4rF4ssvv6zoWygUXn/99TPOOGPPcXvOeXyOOun/5lK4k5URUaVh6mORww47xD304OUrV320cPHzL72ivf/egK7kAI1FAgGHc5KsNIq/e2ssWSowVyUnTGSmJ/PFwsfSWxsM5PYY3bz/9EmTJ48YMSKo62rhQ4D/C6WqlzzDMIYPG/7oo49+5zuntLVtTyZTp512qiLQ4MGDH3tsztlnn7lixYpMJn300ccQ0YABA6LR6PPPv3DhhRcuWLAgFAoNHDhQje2vOEymaRqG0bdvX9Xa6rruwIEDGxsbW1tbly//qPIVTZs2LRqNTps27cUXX1QW9Fe/+tVDD/3tjjvu+OEPf6jGwVe8fsZYLBYrpVKF2H306Hg83qe1T2dnJ3x5+HKyHYjIOPM84boul3LM0CEnnH7y9++5ba/77mm/6OJ5EybO0fX30mmnkDOIuMYBlQKEKuI8icS4pgFAsbCmK/msFE+NGbHp3HPG3H3n92fde/LZZ48fM8ZiTAlUGGP4/xn6KQoOHTbkoYcenjlz5rZt25Yv/7C1tUXNdOjbt88jjzxy1FFHLV++fOPGTfX19bZta5rGGJs3b+7xx39rwYIFqmZHRNls9qmnnqrkSHO53JNPPqnuupQylUopIWguV2qRNU3zySf/+dZbbz3yyOxx48apas8zzzw9ffr0tra2FStWMMby+fycOXPU/uFCiMomgySps6MLALLZ7I5zTf4HfazPTxuq8qrJWEtT49gJ4/c84rDg1KkrG5ved5z3N2/5KJk6NhhYyfAT17UYFgiGaPpoU5/T1hU0teLIIakjjxj94/NmnnPO5GlT+7W2Bjh3Pa+0Uvz/WKkdEYlEBg0aOH78+Pr6uhEjRgwYMEC5LPF4fODAAWPHjm1ubho9enSfPqUKYENDw8iRI4YPH97QUD9p0iS1kYnjOKtXrx46dKjy7vv27bts2bIhQ4ao3SXq6+v79+9vGEZLS0tTUxNj7JNPPikU8lLKUaNGHXnkkSoayGazL7/88tSpUw866CD1ja1atWq33XZTMWZdXV2/fv2Us9HY2NCvXz/TNPv06aO2yfhSfKxdXCv8goVGSQQEGmfIOQAk8/nlS5c9OvsfDc89946dfZPxsJRpxL0FTQqZH02YdOp3Ttl9wvjGWFw5Mm65+XhXfZWKCmoH1B3LfP/H1yvRYq8qngowlfetXlRGTrUunn766TstLFYarJX/VBbJsF7n+tKjwq8SsXoxDEDXuKorL35z0Q1XXfva0ncikUgmmx01cOClP7vikCOOUGkszyulznf5o6lie875jt30n/96JfuwY1JUsaHyrnqreohDLpdzXVdt5FThUyWnVc2w6nerj199QJ9YO7+v6tvUdX3rxs03/PLXc+c/O2nihCuvuWrI8GFqexn2xRa7ryB6WbivKb7SxOougwihG4YU4r13lw0dPiwYCv33SzH/zccJvhqTj//3iaXiHSXwVYnW/1VW/c/ga0OsigPxn/ClfHztE6Rf3P/w79nX4075X4EPn1g+fGL58Inlw4dPLB8+sXz4xPLhwyeWD59YPnxi+fDhE8uHTywfPrF8+PCJ5cMnlg+fWD58+MTy4RPLh08sHz58YvnwieXDJ5YPHz6xfPjE8uETy4cPn1g+fGL58Inlw4dPLB8+sXz4xPLhwyeWD59YPnxi+fDhE8uHTywfPrF8+PCJ5cMnlg+fWD58+MTy4RPLh08sHz58YvnwieXDJ5YPHz6xfPjE8uETy4cPn1g+fGL58Inlw4dPLB8+sXz4xPLhwyeWD59YPnxi+fDxOfh/ife9fRQ/zNkAAAAASUVORK5CYII=';
+
+// ═══════════════════════════════════════════
+// CONFIG & DUMMY DATA
+// ═══════════════════════════════════════════
+var DEFAULT_TMPL_ALL = [
+  '🟢🏁 ALL HOMEWORK DONE 🏁🟢',
+  'THE HERITAGE PUBLIC SCHOOL Homework Update | {CLASS} | {DATE}',
+  '',
+  'Dear Parents,',
+  '',
+  'Every child completed their homework today. 🏆',
+  '',
+  'This reflects genuine responsibility and a strong daily learning habit — exactly what we hope to build in every child.',
+  '',
+  'A few words of appreciation from you at home will mean a great deal.',
+  '',
+  'At The Heritage Public School, we value effort over perfection and treat mistakes as a natural part of learning.',
+  '',
+  'Warm regards,',
+  'THPS Homework Team',
+  '',
+  '🟢🎉 A proud day — well done, everyone! 🎉🟢'
+].join('\n');
+
+var DEFAULT_TMPL_PARTIAL = [
+  '🟡🥈 Almost there — a little more to complete 🥈🟡',
+  'THE HERITAGE PUBLIC SCHOOL Homework Update | {CLASS} | {DATE}',
+  '',
+  'Dear Parents,',
+  '',
+  "Most of the class completed today's homework — our appreciation to them. 🥈",
+  '',
+  'We kindly request your support in helping a few children finish their pending work calmly at home. Once it is done and shown to the teacher, the record is updated.',
+  '',
+  'At THPS, mistakes are always accepted; what matters is that every child makes an honest attempt.',
+  '',
+  'Children with work still to complete:',
+  '',
+  '{NOT_DONE_LIST}',
+  '',
+  'Warm regards,',
+  'THPS Homework Team',
+  '',
+  '🟡🥈 Almost there — a little more to complete 🥈🟡'
+].join('\n');
+
+var DEFAULT_TMPL_NONE = [
+  '🔴🚩 HOMEWORK NOT DONE 🚩🔴',
+  'THE HERITAGE PUBLIC SCHOOL Homework Update | {CLASS} | {DATE}',
+  '',
+  'Dear Parents,',
+  '',
+  "⚠️ Today's homework was not completed by the class. This is uncommon, and we see it simply as a moment to begin again together.",
+  '',
+  'Homework at our school is never about pressure. It is gentle daily practice that helps children grow in understanding and confidence, one step at a time.',
+  '',
+  'The children will be given the opportunity to complete the pending work, and their record will be updated once they do.',
+  '',
+  'Mistakes are always welcome here; we ask only that every child makes the effort to try.',
+  '',
+  'Warm regards,',
+  'THPS Homework Team',
+  '',
+  "🔴🚨 Let's complete it together tomorrow 🚨🔴"
+].join('\n');
+
+var cfg = {};
+
+var DUMMY_STUDENTS = {
+  "PG-A":["Shifa","Daksh","Mahikaba"],
+  "NUR-A":["Aayrin","Amena","Anam","Chalshi","Chanchal","Jaynandiniba","Kanak","Kesarba","Khushi","Kiswa","Mahira","Nusaiba","Priyrajsinh","Riyansh Raj","Trishaba","Urvi"],
+  "LKG-A":["Chitra","Devadityasinh","Devrajsinh","Dishant","Divya Ranjan","Harshvardhansinh","Hridaya","Jaypalsinh","Man","Palak","Sant Charandas","Smiti"],
+  "UKG-A":["Aarohi","Adil","Ananya","Anshika","Atharv","Ayaan","Ayanshraj","Devanshu","Dhairyarajsinh","Ekanshi","Erik","Hari Charandas","Hasnain","Himanshi","Kartik","Nayara","Nityakumari","Pari","Yaduvirsinh","Yuvaan","Zaid"],
+  "1-A":["Aditya","Akriti","Arnav Pratap","Ayush","Bharti","Chitra","Dakshrajsinh","Dhanyarajsinh","Dhruva","Dhruvi","Durva","Isha","Jannat Bibi","Kinjal","Mahirajsinh","Manveersinh","Mayank","Nayan","Nityashreeba","Pruthvi","Rishikaray","Ritika","Rivansh","Shivansh","Vani Sinha","Vrajpalsinh"],
+  "2-A":["Abram","Amar","Chandan","Harsh","Harsh K","Jivansh","Kritiba","Laxmi","Maanav","Mo.ayan","Nishantkumar","Nityarajsinh","Priyansh","Rudrarajsinh","Sakshi","Shreyanshiba","Vaishnavi","Yash","Yuvraj"],
+  "3-A":["Aaradhya","Aayatbibi","Abhinav Singh","Ali","Anas","Anjana Singh","Arnav","Ayushkumar","Devansh","Dharmdeep","Divyakumar","Harianshsinh","Jiyansh","Kiyaan","Rashi","Rizwansha","Rudraraj","Rugved","Saurav Suman","Yuvrajsinh"],
+  "4-A":["Anamol","Ayush","Devanshi","Dhairyarajsinh","Dravya","Memuna","Nija","Paavan","Shahad Ranjan","Siya","Smit","Yashraj","Zeba"],
+  "5-A":["Akanchhika Raj","Anshraj","Arjun","Ayana","Daksh","Divyansh","Fiza","Hardipsinh","Harjeetsinh","Harshrajsinh","Hitarth","Ikara","Jayvarshansinh","Karmarajsinh","Kirpal","Omeshwari","Prakriti","Pranjal","Purab","Shaurya","Yudhavrajsinh","Zaki"],
+  "6-A":["Arnav Gautam","Disha","Harshvardhansinh","Jayveersinh","Karmjeetsinh","Mahammad Faiz","Manav","Mandeepsinh","Meet","Mrunaliba","Priyansh","Rashmika Kumari","Rehan","Riyaray","Sahab","Vishwdeepsinh","Yashima","Yogirajsinh"],
+  "7-A":["Abhijeetsinh","Akshaykumar","Ali","Ananyasingh","Anshraj","Bandana Kumari","Darshrajsinh","Deepraj","Dhruvikaba","Harmahini","Jainam","Jaineel","Kevin","Krishnadipsinh","Mahipalsinh","Manyataba","Misbah","Ruhisingh","Sanjana Kumari","Siddhraj","Sunilkumar","Tanisha","Tanista","Veda"],
+  "8-A":["Aadarshsingh","Arav","Bhavy","Dev","Harshrajsinh","Ikra","Kaureen","Kriya","Lavish","Manyashreeba","Nehal","Prince New","Rudradattsinh","Rudrarajsinh","Sabihunnisha","Sanvi","Ushal"],
+  "9-A":["Aadityarajsinh","Anas","Arafat","Arav","Asra","Dhairya","Gunjan","Krish","Manasviba","Manyataba","Narendra","Pushparaj"],
+  "10-A":["Arhan","Harshrajsinh","Sahitya","Shivaniba","Sultan","Yashrajsinh"],
+  "11-A":["Aaryan","Ayan","Fiza","Krisha","Nafisha","Nishchal","Sahin"],
+  "12-A":["Amitrajsinh"]
+};
+
+// Built-in default subjects per standard. The principal can override these via Settings → Manage Subjects.
+// Once edited, the override is saved to cfg.subjectsByStd and takes precedence.
+var DEFAULT_SUBJECTS = {
+  'PG':       ['Stories','Rhymes','Drawing','Activity'],
+  'NUR':      ['English','Stories','Rhymes','Drawing','Activity'],
+  'LKG':      ['English','Maths','Stories','Rhymes','Drawing','Activity'],
+  'UKG':      ['English','Maths','Hindi','Stories','Drawing','G.K.'],
+  'default':  ['Mathematics','English','Hindi','Gujarati','Science','Social Science','Computer','Drawing','G.K.'],
+  '11':       ['Physics','Chemistry','Biology','Mathematics','English','Computer'],
+  '12':       ['Physics','Chemistry','Biology','Mathematics','English','Computer']
+};
+
+var SUBJ_ALL = ['Mathematics','English','Hindi','Science','Social Science','Gujarati','Computer'];
+var JUNE = [1,2,3,4,5,8,9,10,11,12,15,16,17,18,19,22,23,24,25,26];
+var GRADES = [{k:'E',l:'Excellent'},{k:'G',l:'Good'},{k:'A',l:'Average'},{k:'N',l:'Needs Work'}];
+
+// Submission state
+var sRowCtr = 0, sRows = [];
+var subState = {}, subjND = {}, gradeState = {}, absentState = {}, curHW = null;
+var csvParsed = [];
+var lastActiveTemplateId = 'tmpl-partial';
+var EYESPY_DEFAULT_SCRIPT_URL = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  loadCfg();
+  setupLogo();
+  setDate();
+  buildDropdowns();
+  setDefaultDates();
+  addSRow();
+  renderReports();
+  buildScriptCode();
+  bindAllEvents();
+  updateSettingsMeta();
+  checkConn();
+});
+
+function loadCfg() {
+  try { cfg = JSON.parse(localStorage.getItem('eyespy_cfg') || '{}'); } catch(e) { cfg = {}; }
+
+  // Migration: old schema (numeric standards without PG/NUR) → new schema
+  var needsMigration = !cfg.standards || !cfg.standards.length ||
+    !cfg.standards.some(function(s) { return s.num === 'PG'; }) ||
+    typeof cfg.standards[0].num === 'number';
+  if (needsMigration) {
+    cfg.standards = [
+      {num:'PG',  label:'PG (Play Group)',  sections:['A']},
+      {num:'NUR', label:'NUR (Nursery)',    sections:['A']},
+      {num:'LKG', label:'LKG',              sections:['A']},
+      {num:'UKG', label:'UKG',              sections:['A']}
+    ];
+    for (var i = 1; i <= 12; i++) cfg.standards.push({num: String(i), label: 'Standard ' + i, sections:['A']});
+  }
+
+  if (!cfg.gradStd) cfg.gradStd = [];
+  // Normalise gradStd to strings
+  cfg.gradStd = cfg.gradStd.map(function(x) { return String(x); });
+
+  cfg.labelW = cfg.labelW || 60;
+  cfg.labelH = cfg.labelH || 40;
+  cfg.schoolName = cfg.schoolName || 'The Heritage Public School';
+  cfg.schWeb = cfg.schWeb || 'www.thps.in';
+  cfg.scriptURL = cfg.scriptURL || EYESPY_DEFAULT_SCRIPT_URL;
+  cfg.academicYear = cfg.academicYear || '2026–27';
+  cfg.tmplAll = cfg.tmplAll || DEFAULT_TMPL_ALL;
+  cfg.tmplPartial = cfg.tmplPartial || DEFAULT_TMPL_PARTIAL;
+  cfg.tmplNone = cfg.tmplNone || DEFAULT_TMPL_NONE;
+  // Migration: if user has old templates (no green/yellow/red markers OR old harsh wording), upgrade automatically.
+  if (cfg.tmplAll.indexOf('🟢🏁') === -1) cfg.tmplAll = DEFAULT_TMPL_ALL;
+  if (cfg.tmplPartial.indexOf('🟡🥈') === -1 || cfg.tmplPartial.indexOf('SOME WORK PENDING') !== -1) cfg.tmplPartial = DEFAULT_TMPL_PARTIAL;
+  if (cfg.tmplNone.indexOf('🔴🚩') === -1) cfg.tmplNone = DEFAULT_TMPL_NONE;
+
+  // Initialise per-standard subjects (override stays in cfg, principal can edit/add/delete)
+  if (!cfg.subjectsByStd) {
+    cfg.subjectsByStd = {};
+    // Seed each standard with its built-in defaults so the editor can show + edit them
+    cfg.standards.forEach(function(s) {
+      cfg.subjectsByStd[s.num] = (DEFAULT_SUBJECTS[s.num] || DEFAULT_SUBJECTS['default']).slice();
+    });
+  }
+
+  // Migration: if no students OR old dummy students (detect by checking if "Aarav Shah" exists in 5-A
+  // exactly as it did in the demo data and PG-A is missing), load real default students.
+  var hasOldDummy = cfg.students && cfg.students['5-A'] &&
+    cfg.students['5-A'].indexOf('Aarav Shah') === 0 && !cfg.students['PG-A'];
+  if (!cfg.students || hasOldDummy) {
+    cfg.students = JSON.parse(JSON.stringify(DUMMY_STUDENTS));
+  }
+
+  var el;
+  el = document.getElementById('lblW'); if (el) el.value = cfg.labelW;
+  el = document.getElementById('lblH'); if (el) el.value = cfg.labelH;
+  el = document.getElementById('schName'); if (el) el.value = cfg.schoolName;
+  el = document.getElementById('schWeb'); if (el) el.value = cfg.schWeb;
+  el = document.getElementById('urlInp'); if (el) el.value = cfg.scriptURL;
+}
+
+function saveCfg() {
+  localStorage.setItem('eyespy_cfg', JSON.stringify(cfg));
+}
+
+function setupLogo() {
+  var img = document.getElementById('hlogoImg');
+  if (img && SCHOOL_LOGO && SCHOOL_LOGO !== '__LOGO_PLACEHOLDER__') img.src = SCHOOL_LOGO;
+}
+
+function setDate() {
+  var n = new Date();
+  var el = document.getElementById('hdate');
+  if (el) el.innerHTML = n.toLocaleDateString('en-IN', {weekday:'short',day:'numeric',month:'short'}).replace(',','') + '<br>' + n.getFullYear();
+}
+
+function getClassList() {
+  var list = [];
+  cfg.standards.forEach(function(s) {
+    s.sections.forEach(function(sec) { list.push(s.num + '-' + sec); });
+  });
+  return list;
+}
+
+function buildDropdowns() {
+  var cls = getClassList();
+  var ids = ['aCls','sCls','hmCls','stuClsF','prCls','csvCls','pendCls'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var isFilter = id === 'stuClsF' || id === 'hmCls';
+    el.innerHTML = '<option value="">' + (isFilter ? 'All Classes' : 'Select…') + '</option>';
+    cls.forEach(function(c) { el.innerHTML += '<option value="' + c + '">' + c + '</option>'; });
+  });
+}
+
+function setDefaultDates() {
+  var today = new Date();
+  var tom = new Date(today); tom.setDate(today.getDate() + 1);
+  var di = document.getElementById('aDue'); if (di) di.value = toISO(tom);
+  var si = document.getElementById('sDate'); if (si) si.value = toISO(today);
+}
+
+function toISO(d) { return d.toISOString().split('T')[0]; }
+function fmtDate(v) {
+  if (!v) return '';
+  var parts = v.split('-');
+  var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return parseInt(parts[2]) + ' ' + mo[parseInt(parts[1])-1] + ' ' + parts[0];
+}
+function fmtDateShort(v) {
+  if (!v) return '';
+  var p = v.split('-');
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+// ═══════════════════════════════════════════
+// EVENT BINDING (all in one place — no inline onclick)
+// ═══════════════════════════════════════════
+function bindAllEvents() {
+  // Bottom nav
+  document.querySelectorAll('.bn').forEach(function(btn) {
+    btn.addEventListener('click', function() { navTo(this.dataset.nav, this); });
+  });
+
+  // Report tabs
+  document.querySelectorAll('.rtab').forEach(function(btn) {
+    btn.addEventListener('click', function() { switchRPanel(this.dataset.rpanel, this); });
+  });
+
+  // Help tabs
+  document.querySelectorAll('.htab').forEach(function(btn) {
+    btn.addEventListener('click', function() { switchHelpPanel(this.dataset.hpan, this); });
+  });
+
+  // Close buttons (data-close attribute)
+  document.querySelectorAll('[data-close]').forEach(function(btn) {
+    btn.addEventListener('click', function() { closeModal(this.dataset.close); });
+  });
+
+  // Assign screen
+  document.getElementById('addSRowBtn').addEventListener('click', addSRow);
+  document.getElementById('previewLblBtn').addEventListener('click', function() { previewLabel(null); });
+  document.getElementById('saveHWBtn').addEventListener('click', saveHW);
+  document.getElementById('aCls').addEventListener('change', updateSubjectDropdowns);
+
+  // Submissions screen
+  document.getElementById('loadSubBtn').addEventListener('click', loadSubHW);
+  document.getElementById('pendBtn').addEventListener('click', function() { renderPending(); openModal('pendModal'); });
+  document.getElementById('openWABtn').addEventListener('click', openWA);
+  document.getElementById('saveSubBtn').addEventListener('click', saveSubs);
+
+  // Report buttons
+  document.getElementById('hmCls').addEventListener('change', renderStuHeat);
+  document.getElementById('stuClsF').addEventListener('change', renderStuList);
+  document.getElementById('stuSrch').addEventListener('input', renderStuList);
+  document.getElementById('prCls').addEventListener('change', loadPRStudents);
+  document.getElementById('pendScope').addEventListener('change', onPendScopeChange);
+  document.getElementById('pendCls').addEventListener('change', renderPendingReport);
+  document.getElementById('pendStu').addEventListener('change', renderPendingReport);
+  document.getElementById('pendCSVBtn').addEventListener('click', downloadPendingCSV);
+  document.getElementById('pendPrintBtn').addEventListener('click', printPendingReport);
+  document.getElementById('expClsBtn').addEventListener('click', function() { exportReport('class'); });
+  document.getElementById('expStuBtn').addEventListener('click', function() { exportReport('student'); });
+  document.getElementById('prevPRBtn').addEventListener('click', previewParentReport);
+  document.getElementById('printPRBtn').addEventListener('click', printParentReport);
+
+  // Label modal
+  document.getElementById('printLblBtn').addEventListener('click', printLabel);
+  document.getElementById('driveLblBtn').addEventListener('click', saveLabelDrive);
+
+  // WA modal
+  document.getElementById('copyWABtn').addEventListener('click', copyWA);
+  document.getElementById('editTmplBtn').addEventListener('click', function() { closeModal('waModal'); openWATempl(); });
+
+  // WA Template modal
+  document.getElementById('saveTmplBtn').addEventListener('click', saveTemplates);
+  document.getElementById('resetTmplBtn').addEventListener('click', resetTemplates);
+  document.querySelectorAll('.tmpl-var').forEach(function(el) {
+    el.addEventListener('click', function() { insertVar(this.dataset.var); });
+  });
+
+  // Settings buttons
+  document.getElementById('secBtn').addEventListener('click', function() { renderSecList(); openModal('secModal'); });
+  document.getElementById('csvBtn').addEventListener('click', function() { resetCSV(); openModal('csvModal'); });
+  document.getElementById('promoteBtn').addEventListener('click', function() { openPromoteModal(); });
+  document.getElementById('confirmPromoteBtn').addEventListener('click', confirmPromote);
+  document.getElementById('gradBtn').addEventListener('click', function() { renderGradList(); openModal('gradModal'); });
+  document.getElementById('subjBtn').addEventListener('click', function() { renderSubjList(); openModal('subjModal'); });
+  document.getElementById('resetSubjBtn').addEventListener('click', resetSubjectsToDefaults);
+  // Event delegation for subject add/remove buttons
+  document.getElementById('subjList').addEventListener('click', function(e) {
+    var rm = e.target.closest('[data-rmsubj]');
+    if (rm) { rmSubject(rm.dataset.std, rm.dataset.subj); return; }
+    var add = e.target.closest('[data-addsubj]');
+    if (add) { addSubjectFromInput(add.dataset.addsubj); return; }
+  });
+  document.getElementById('subjList').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.matches('[data-newsubj]')) {
+      e.preventDefault();
+      addSubjectFromInput(e.target.dataset.newsubj);
+    }
+  });
+  document.getElementById('waTemplBtn').addEventListener('click', openWATempl);
+  document.getElementById('bkBtn').addEventListener('click', function() { renderBkList(); openModal('bkModal'); });
+  document.getElementById('expBtn').addEventListener('click', function() { openModal('expModal'); });
+  document.getElementById('testConnBtn').addEventListener('click', testConn);
+  document.getElementById('scriptCodeBtn').addEventListener('click', function() { openModal('scriptModal'); });
+  document.getElementById('saveLblBtn').addEventListener('click', saveLblSize);
+  document.getElementById('saveSchBtn').addEventListener('click', saveSchInfo);
+  document.getElementById('urlInp').addEventListener('input', function() { cfg.scriptURL = this.value.trim(); saveCfg(); checkConn(); });
+
+  // CSV modal
+  document.getElementById('csvDrop').addEventListener('click', function() { document.getElementById('csvFile').click(); });
+  document.getElementById('csvFile').addEventListener('change', handleCSVFile);
+  document.getElementById('csvPaste').addEventListener('input', parseCSVPaste);
+  document.getElementById('importBtn').addEventListener('click', importStudents);
+  document.getElementById('csvTmplBtn').addEventListener('click', downloadCSVTmpl);
+
+  // Help
+  document.getElementById('helpBtn').addEventListener('click', function() { document.getElementById('helpOv').classList.add('show'); });
+  document.getElementById('helpBack').addEventListener('click', function() { document.getElementById('helpOv').classList.remove('show'); });
+
+  // Backup modal copy button
+  document.getElementById('copyScriptBtn').addEventListener('click', copyScript);
+
+  // Export modal items
+  document.getElementById('expCls').addEventListener('click', function() { exportReport('class'); closeModal('expModal'); });
+  document.getElementById('expNotDone').addEventListener('click', function() { exportReport('notdone'); closeModal('expModal'); });
+  document.getElementById('expStu').addEventListener('click', function() { exportReport('student'); closeModal('expModal'); });
+  document.getElementById('expSubj').addEventListener('click', function() { exportReport('subject'); closeModal('expModal'); });
+
+  // Close modals on backdrop click
+  document.querySelectorAll('.bkd').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) closeModal(this.id);
+    });
+  });
+
+  // Pending list event delegation
+  document.getElementById('pendList').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-resolve]');
+    if (btn) resolvePending(btn.dataset.resolve);
+  });
+
+  // Submission checklist event delegation
+  document.getElementById('stChecklist').addEventListener('click', function(e) {
+    var absBtn = e.target.closest('.abs-btn');
+    if (absBtn) { toggleAbsent(absBtn.dataset.absname, parseInt(absBtn.dataset.idx)); return; }
+    var tglBtn = e.target.closest('.tgl');
+    if (tglBtn) { toggleStu(tglBtn.dataset.name, parseInt(tglBtn.dataset.idx)); return; }
+    var stmain = e.target.closest('.stmain');
+    if (stmain) { toggleStu(stmain.dataset.name, parseInt(stmain.dataset.idx)); return; }
+    var chip = e.target.closest('.schip');
+    if (chip) { toggleSubjChip(chip.dataset.name, parseInt(chip.dataset.idx), chip.dataset.subj); return; }
+    var gopt = e.target.closest('.gopt');
+    if (gopt) { setGrade(gopt.dataset.name, parseInt(gopt.dataset.idx), gopt.dataset.grade); return; }
+  });
+
+  // Section modal event delegation
+  document.getElementById('secList').addEventListener('click', function(e) {
+    var addBtn = e.target.closest('[data-addsec]');
+    if (addBtn) { addSec(addBtn.dataset.addsec); return; }
+    var rmBtn = e.target.closest('[data-rmsec]');
+    if (rmBtn) { rmSec(rmBtn.dataset.std, rmBtn.dataset.sec); return; }
+  });
+
+  // Grading modal event delegation
+  document.getElementById('gradList').addEventListener('click', function(e) {
+    var tgl = e.target.closest('[data-gradtgl]');
+    if (tgl) toggleGrad(tgl.dataset.gradtgl);
+  });
+
+  // Student list event delegation
+  document.getElementById('stuListEl').addEventListener('click', function(e) {
+    var card = e.target.closest('[data-stuname]');
+    if (card) showStuProfile(card.dataset.stuname, card.dataset.stucls);
+  });
+
+  // Back from profile
+  document.getElementById('stuProfV').addEventListener('click', function(e) {
+    if (e.target.closest('[data-backstu]')) {
+      document.getElementById('stuListV').style.display = 'block';
+      document.getElementById('stuProfV').style.display = 'none';
+    }
+    if (e.target.closest('[data-expstu]')) {
+      var btn = e.target.closest('[data-expstu]');
+      exportSingleStudent(btn.dataset.name, btn.dataset.cls);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function navTo(id, btn) {
+  document.querySelectorAll('.scr').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.bn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('scr-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function switchRPanel(id, btn) {
+  document.querySelectorAll('.rpan').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.rtab').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('rp-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'pending') renderPendingReport();
+}
+
+function switchHelpPanel(id, btn) {
+  document.querySelectorAll('.hpan').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.htab').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ═══════════════════════════════════════════
+// ASSIGN SCREEN
+// ═══════════════════════════════════════════
+function getSubjs(cls) {
+  var n = cls ? cls.split('-')[0] : '';
+  // Per-standard override from settings
+  if (cfg.subjectsByStd && cfg.subjectsByStd[n] && cfg.subjectsByStd[n].length) {
+    return cfg.subjectsByStd[n];
+  }
+  if (cfg.subjectsByStd && cfg.subjectsByStd['default'] && cfg.subjectsByStd['default'].length && !DEFAULT_SUBJECTS[n]) {
+    return cfg.subjectsByStd['default'];
+  }
+  return DEFAULT_SUBJECTS[n] || DEFAULT_SUBJECTS['default'];
+}
+
+function addSRow() {
+  var id = ++sRowCtr;
+  sRows.push(id);
+  var cls = document.getElementById('aCls').value || '';
+  var opts = getSubjs(cls);
+  var optHtml = '<option value="">Select…</option>';
+  opts.forEach(function(s) { optHtml += '<option>' + s + '</option>'; });
+
+  var div = document.createElement('div');
+  div.className = 'srow';
+  div.id = 'sr-' + id;
+  div.innerHTML =
+    '<div class="srow-hd">' +
+      '<span class="srow-badge" id="sb-' + id + '">Subject ' + sRows.length + '</span>' +
+      '<button class="rmbtn" data-rmid="' + id + '">✕</button>' +
+    '</div>' +
+    '<div class="fr"><label class="lbl">Subject</label><select class="inp" id="ss-' + id + '">' + optHtml + '</select></div>' +
+    '<div class="fr" style="margin-top:8px"><label class="lbl">Homework</label><textarea class="inp" id="sh-' + id + '" rows="2" placeholder="Homework details…"></textarea></div>';
+
+  div.querySelector('[data-rmid]').addEventListener('click', function() { removeSRow(parseInt(this.dataset.rmid)); });
+  div.querySelector('textarea').addEventListener('input', checkLabelFit);
+  document.getElementById('srowList').appendChild(div);
+}
+
+function removeSRow(id) {
+  if (sRows.length === 1) { showToast('Need at least one subject', true); return; }
+  sRows = sRows.filter(function(r) { return r !== id; });
+  var el = document.getElementById('sr-' + id);
+  if (el) el.remove();
+  sRows.forEach(function(r, i) {
+    var badge = document.getElementById('sb-' + r);
+    if (badge) badge.textContent = 'Subject ' + (i + 1);
+  });
+  checkLabelFit();
+}
+
+function updateSubjectDropdowns() {
+  var cls = document.getElementById('aCls').value;
+  var opts = getSubjs(cls);
+  sRows.forEach(function(id) {
+    var sel = document.getElementById('ss-' + id);
+    if (!sel) return;
+    var cur = sel.value;
+    var html = '<option value="">Select…</option>';
+    opts.forEach(function(s) { html += '<option' + (s === cur ? ' selected' : '') + '>' + s + '</option>'; });
+    sel.innerHTML = html;
+  });
+}
+
+function checkLabelFit() {
+  var W = cfg.labelW || 60, H = cfg.labelH || 40;
+  // Build entries from current form state
+  var entries = [];
+  sRows.forEach(function(id) {
+    var s = document.getElementById('ss-' + id);
+    var h = document.getElementById('sh-' + id);
+    var sv = s ? s.value : '';
+    var hv = h ? h.value : '';
+    if (sv || hv) entries.push({subject: sv || '', hwText: hv || ''});
+  });
+  if (!entries.length) {
+    var warn = document.getElementById('lwarn');
+    if (warn) warn.classList.remove('show');
+    return true;
+  }
+  var fit = computeLabelFontSize(W, H, entries);
+  var warn = document.getElementById('lwarn');
+  if (warn) warn.classList.toggle('show', fit.overflow);
+  return !fit.overflow;
+}
+
+function collectAssign() {
+  var cls = document.getElementById('aCls').value;
+  var due = document.getElementById('aDue').value;
+  if (!cls) { showToast('Select a class', true); return null; }
+  if (!due) { showToast('Set a due date', true); return null; }
+  var entries = [];
+  for (var i = 0; i < sRows.length; i++) {
+    var id = sRows[i];
+    var s = document.getElementById('ss-' + id);
+    var h = document.getElementById('sh-' + id);
+    var sv = s ? s.value : '';
+    var hv = h ? h.value.trim() : '';
+    if (!sv || !hv) { showToast('Fill all subjects and homework text', true); return null; }
+    entries.push({subject: sv, hwText: hv});
+  }
+  var today = toISO(new Date());
+  return {hwId: 'HW-' + today + '-' + cls.replace(/\s/g,'') + '-' + Date.now().toString().slice(-4), cls: cls, assignedDate: today, dueDate: due, entries: entries};
+}
+
+async function saveHW() {
+  var data = collectAssign();
+  if (!data) return;
+  showLoad('Saving to Google Sheets…');
+  var rows = data.entries.map(function(e) {
+    return {hw_id: data.hwId, date: data.assignedDate, due_date: data.dueDate, class: data.cls, subject: e.subject, hw_text: e.hwText, assigned_by: 'Teacher', created_at: new Date().toISOString()};
+  });
+  // Store locally so the Submissions screen + pending report always have the real homework text,
+  // keyed by class + due date (the date the teacher checks the work).
+  saveLocalHW(data.cls, data.dueDate, data.entries);
+  var ok = await callSheet({action: 'saveHomework', rows: rows});
+  hideLoad();
+  if (ok) {
+    autoBackup('Homework', data.cls + ' · ' + fmtDate(data.dueDate), {type:'homework',data:data});
+    var flash = document.getElementById('flash');
+    flash.classList.add('show');
+    setTimeout(function() { flash.classList.remove('show'); }, 3000);
+    showToast('Saved! Opening label…');
+    setTimeout(function() { previewLabel(data); }, 700);
+  }
+}
+
+// Local homework store — key: class|date, value: [{subject, hwText}]
+function saveLocalHW(cls, date, entries) {
+  var store = getLocalHWStore();
+  store[cls + '|' + date] = entries.map(function(e) { return {subject: e.subject, hwText: e.hwText}; });
+  localStorage.setItem('eyespy_hw', JSON.stringify(store));
+}
+function getLocalHWStore() {
+  try { return JSON.parse(localStorage.getItem('eyespy_hw') || '{}'); } catch(e) { return {}; }
+}
+function getLocalHW(cls, date) {
+  var store = getLocalHWStore();
+  return store[cls + '|' + date] || null;
+}
+
+// Compute the best font size that fits the label at given dimensions.
+// Tries font sizes from large to small (down to 6.5pt minimum).
+// Returns { fitSize: pt, overflow: true/false }
+function computeLabelFontSize(W, H, entries) {
+  // Available print area (mm) — subtract margins
+  var availW = W - 3;  // 1.5mm padding each side
+  var availH = H - 2.5;  // 1.2mm top + footer + class line at fixed size
+  // Try font sizes from largest to smallest
+  var sizes = [11, 10.5, 10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5];
+  for (var i = 0; i < sizes.length; i++) {
+    var pt = sizes[i];
+    // At pt size, approx chars per mm in Arial ≈ pt * 0.18 wide → mm per char ≈ pt * 0.18
+    // So chars per line = availW / (pt * 0.18)
+    var charsPerLine = Math.floor(availW / (pt * 0.18));
+    if (charsPerLine < 6) continue; // useless if line too narrow
+    // Line height ≈ pt * 0.42 mm (1.2 line height factor over 1pt = 0.353mm)
+    var lineH = pt * 0.42;
+    // Reserve header (class+date) ≈ 1 line
+    var linesNeeded = 1; // header
+    entries.forEach(function(e) {
+      // Subject line + homework text lines
+      linesNeeded += 1; // subject
+      var hwLen = (e.hwText || '').length;
+      linesNeeded += Math.max(1, Math.ceil(hwLen / charsPerLine));
+    });
+    var totalH = linesNeeded * lineH;
+    if (totalH <= availH) {
+      return { fitSize: pt, overflow: false, lines: linesNeeded };
+    }
+  }
+  // Even at 6.5pt it doesn't fit
+  return { fitSize: 6.5, overflow: true, lines: 0 };
+}
+
+function previewLabel(data) {
+  if (!data) data = collectAssign();
+  if (!data) return;
+  var W = cfg.labelW || 60, H = cfg.labelH || 40;
+
+  // Compute best font size
+  var fit = computeLabelFontSize(W, H, data.entries);
+
+  // Update note + warning
+  document.getElementById('lblNote').textContent = W + ' × ' + H + ' mm · Font: ' + fit.fitSize + 'pt · Min 6.5pt';
+  var warn = document.getElementById('lwarn');
+  if (warn) warn.classList.toggle('show', fit.overflow);
+
+  // Header font slightly larger than body (cap +1pt, min 7pt)
+  var headerPt = Math.max(fit.fitSize, 7);
+
+  var entryHtml = data.entries.map(function(e) {
+    return '<div class="lpr">' +
+      '<div class="lpn" style="font-size:' + fit.fitSize + 'pt">' + e.subject + ':</div>' +
+      '<div class="lpt" style="font-size:' + fit.fitSize + 'pt">' + e.hwText + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Render label at true mm size (mm → CSS mm units)
+  document.getElementById('lblprev').style.width = W + 'mm';
+  document.getElementById('lblprev').style.height = H + 'mm';
+  document.getElementById('lblprev').innerHTML =
+    '<div class="lph" style="font-size:' + headerPt + 'pt">' +
+      '<span class="lph-cls">Class ' + data.cls + '</span>' +
+      '<span>' + fmtDateShort(data.dueDate) + '</span>' +
+    '</div>' +
+    '<div class="lpb">' + entryHtml + '</div>';
+
+  window._lastLabelData = data;
+  window._lastLabelFit = fit;
+  openModal('lblModal');
+}
+
+function printLabel() {
+  var data = window._lastLabelData || collectAssign();
+  if (!data) return;
+  var W = cfg.labelW || 60, H = cfg.labelH || 40;
+  var fit = window._lastLabelFit || computeLabelFontSize(W, H, data.entries);
+  var pt = fit.fitSize;
+  var headerPt = Math.max(pt, 7);
+
+  var entryHtml = data.entries.map(function(e) {
+    return '<div style="margin-bottom:.4mm">' +
+      '<div style="font-size:' + pt + 'pt;font-weight:800">' + e.subject + ':</div>' +
+      '<div style="font-size:' + pt + 'pt;line-height:1.2">' + e.hwText + '</div>' +
+    '</div>';
+  }).join('');
+
+  var html =
+    '<div style="padding:.8mm 1.5mm;border-bottom:1px solid #000;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;font-size:' + headerPt + 'pt">' +
+      '<span style="font-weight:800">Class ' + data.cls + '</span>' +
+      '<span>' + fmtDateShort(data.dueDate) + '</span>' +
+    '</div>' +
+    '<div style="padding:1mm 1.5mm">' + entryHtml + '</div>';
+
+  var win = window.open('', '_blank', 'width=' + (W*4) + ',height=' + (H*4));
+  win.document.write(
+    '<!DOCTYPE html><html><head><style>' +
+      '@page{size:' + W + 'mm ' + H + 'mm;margin:0}' +
+      'body{margin:0;width:' + W + 'mm;height:' + H + 'mm;overflow:hidden;background:#fff;color:#000;font-family:Arial,sans-serif;box-sizing:border-box}' +
+    '</style></head><body>' + html + '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);}<\/script></body></html>'
+  );
+  win.document.close();
+}
+
+async function saveLabelDrive() {
+  var data = window._lastLabelData || collectAssign();
+  if (!data) return;
+  if (!cfg.scriptURL) { showToast('Connect Google Sheets first', true); return; }
+  showLoad('Saving to Drive…');
+  var content = cfg.schoolName + '\nClass: ' + data.cls + '\nDue: ' + fmtDate(data.dueDate) + '\n\n' + data.entries.map(function(e) { return e.subject + ': ' + e.hwText; }).join('\n');
+  var ok = await callSheet({action: 'saveLabelToDrive', filename: 'Label_' + data.cls + '_' + data.dueDate, content: content});
+  hideLoad();
+  if (ok) showToast('Saved to Drive!');
+}
+
+// ═══════════════════════════════════════════
+// SUBMISSIONS SCREEN
+// ═══════════════════════════════════════════
+function isGrading(cls) {
+  var n = cls ? cls.split('-')[0] : '';
+  return cfg.gradStd.indexOf(n) !== -1;
+}
+
+async function loadSubHW() {
+  var cls = document.getElementById('sCls').value;
+  var date = document.getElementById('sDate').value;
+  if (!cls) { showToast('Select a class', true); return; }
+  if (!date) { showToast('Select a date', true); return; }
+  showLoad('Loading homework…');
+  subState = {}; subjND = {}; gradeState = {}; absentState = {}; curHW = null;
+  var entries = [];
+  // 1. Prefer locally-saved homework (the real text printed on the label)
+  var localHW = getLocalHW(cls, date);
+  if (localHW && localHW.length) {
+    entries = localHW;
+  } else if (cfg.scriptURL) {
+    // 2. Fall back to Google Sheets
+    var r = await callSheetGet({action: 'getHomework', class: cls, date: date});
+    if (r && r.entries && r.entries.length) entries = r.entries;
+  }
+  if (!entries.length) {
+    // 3. Last resort — demo placeholder (only when nothing was assigned for this class+date)
+    entries = [
+      {subject: 'Mathematics', hwText: 'Complete Exercise 4.3 (Q1–Q10)'},
+      {subject: 'English', hwText: 'Write a paragraph on monsoon season'}
+    ];
+  }
+  var students = (cfg.students || DUMMY_STUDENTS)[cls] || DUMMY_STUDENTS['5-A'];
+  students.forEach(function(s) { subState[s] = true; subjND[s] = []; gradeState[s] = null; absentState[s] = false; });
+  curHW = {cls: cls, date: date, entries: entries};
+  hideLoad();
+  renderChecklist(cls, students, entries);
+}
+
+function renderChecklist(cls, students, entries) {
+  document.getElementById('subEmpty').style.display = 'none';
+  document.getElementById('subContent').style.display = 'block';
+  var grading = isGrading(cls);
+  var allSubjs = entries.map(function(e) { return e.subject; });
+
+  var hwHtml = entries.map(function(e) { return '<div class="hwbox-i"><strong>' + e.subject + ':</strong> ' + e.hwText + '</div>'; }).join('');
+  document.getElementById('hwboxEl').innerHTML = '<div class="hwbox"><div class="hwbox-t">📋 Homework — Class ' + cls + ' · ' + fmtDate(curHW.date) + '</div>' + hwHtml + '</div>';
+
+  var rows = students.map(function(s, i) {
+    var gradeHtml = '';
+    if (grading) {
+      // Grading row visible by default — student starts as Done. Hidden only when student is Not Done.
+      gradeHtml = '<div class="grd-row show" id="gr-' + i + '">';
+      gradeHtml += '<span style="font-size:10px;color:var(--muted);align-self:center;margin-right:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Grade:</span>';
+      GRADES.forEach(function(g) {
+        gradeHtml += '<button class="gopt" data-name="' + encodeURIComponent(s) + '" data-idx="' + i + '" data-grade="' + g.k + '">' + g.l + '</button>';
+      });
+      gradeHtml += '</div>';
+    }
+    var chipsHtml = '<div class="subj-sel" id="ss-sel-' + i + '">';
+    allSubjs.forEach(function(subj) {
+      chipsHtml += '<button class="schip done" id="sc-' + i + '-' + subj.replace(/\s/g,'_') + '" data-name="' + encodeURIComponent(s) + '" data-idx="' + i + '" data-subj="' + encodeURIComponent(subj) + '">' + subj + '</button>';
+    });
+    chipsHtml += '</div>';
+    return '<div class="strow">' +
+      '<div class="stmain" data-name="' + encodeURIComponent(s) + '" data-idx="' + i + '">' +
+        '<div class="stinfo"><span class="stroll">' + (i+1) + '</span><span class="stname">' + s + '</span><span class="ststatus" id="sts-' + i + '"></span></div>' +
+        '<div style="display:flex;align-items:center;gap:7px">' +
+          '<button class="abs-btn" id="abs-' + i + '" data-absname="' + encodeURIComponent(s) + '" data-idx="' + i + '">Absent</button>' +
+          '<button class="tgl done" id="tgl-' + i + '" data-name="' + encodeURIComponent(s) + '" data-idx="' + i + '"></button>' +
+        '</div>' +
+      '</div>' +
+      chipsHtml +
+      gradeHtml +
+    '</div>';
+  }).join('');
+  document.getElementById('stChecklist').innerHTML = rows;
+  updateSubStats(students.length);
+}
+
+function toggleStu(encodedName, idx) {
+  var name = decodeURIComponent(encodedName);
+  if (absentState[name]) return; // absent students can't be toggled
+  subState[name] = !subState[name];
+  var btn = document.getElementById('tgl-' + idx);
+  var sel = document.getElementById('ss-sel-' + idx);
+  var sts = document.getElementById('sts-' + idx);
+  var allSubjs = curHW ? curHW.entries.map(function(e) { return e.subject; }) : [];
+
+  if (subState[name]) {
+    subjND[name] = [];
+    if (btn) btn.className = 'tgl done';
+    if (sel) sel.classList.remove('show');
+    if (sts) sts.textContent = '';
+    allSubjs.forEach(function(subj) {
+      var chip = document.getElementById('sc-' + idx + '-' + subj.replace(/\s/g,'_'));
+      if (chip) chip.className = 'schip done';
+    });
+    var gr = document.getElementById('gr-' + idx);
+    if (gr) gr.classList.add('show'); // show grading for Done students
+  } else {
+    subjND[name] = allSubjs.slice();
+    if (btn) btn.className = 'tgl nd';
+    if (sel) sel.classList.add('show');
+    allSubjs.forEach(function(subj) {
+      var chip = document.getElementById('sc-' + idx + '-' + subj.replace(/\s/g,'_'));
+      if (chip) chip.className = 'schip nd';
+    });
+    if (sts) sts.textContent = '(' + allSubjs.length + ' subj)';
+    var gr = document.getElementById('gr-' + idx);
+    if (gr) gr.classList.remove('show'); // hide grading for Not Done students
+    // Also clear any grade they may have had
+    gradeState[name] = null;
+    if (gr) gr.querySelectorAll('.gopt').forEach(function(g){ g.className = 'gopt'; });
+  }
+  updateSubStats(Object.keys(subState).length);
+}
+
+function toggleAbsent(encodedName, idx) {
+  var name = decodeURIComponent(encodedName);
+  absentState[name] = !absentState[name];
+  var absBtn = document.getElementById('abs-' + idx);
+  var tglBtn = document.getElementById('tgl-' + idx);
+  var sel = document.getElementById('ss-sel-' + idx);
+  var sts = document.getElementById('sts-' + idx);
+  var gr = document.getElementById('gr-' + idx);
+  var allSubjs = curHW ? curHW.entries.map(function(e) { return e.subject; }) : [];
+
+  if (absentState[name]) {
+    // Mark absent — clear done/not-done state, disable toggle
+    subState[name] = true;
+    subjND[name] = [];
+    gradeState[name] = null;
+    if (absBtn) absBtn.className = 'abs-btn on';
+    if (tglBtn) { tglBtn.className = 'tgl absent'; tglBtn.style.opacity = '0.4'; }
+    if (sel) sel.classList.remove('show');
+    if (sts) { sts.textContent = '· Absent (HW pending)'; sts.style.color = '#a5b4fc'; }
+    allSubjs.forEach(function(subj) {
+      var chip = document.getElementById('sc-' + idx + '-' + subj.replace(/\s/g,'_'));
+      if (chip) chip.className = 'schip done';
+    });
+    if (gr) {
+      gr.classList.remove('show');
+      gr.querySelectorAll('.gopt').forEach(function(g){ g.className = 'gopt'; });
+    }
+  } else {
+    // Un-absent — back to default done, restore grading
+    subState[name] = true;
+    if (absBtn) absBtn.className = 'abs-btn';
+    if (tglBtn) { tglBtn.className = 'tgl done'; tglBtn.style.opacity = '1'; }
+    if (sts) { sts.textContent = ''; sts.style.color = ''; }
+    if (gr) gr.classList.add('show');
+  }
+  updateSubStats(Object.keys(subState).length);
+}
+
+function toggleSubjChip(encodedName, idx, encodedSubj) {
+  var name = decodeURIComponent(encodedName);
+  var subj = decodeURIComponent(encodedSubj);
+  if (!subjND[name]) subjND[name] = [];
+  var pos = subjND[name].indexOf(subj);
+  if (pos !== -1) subjND[name].splice(pos, 1);
+  else subjND[name].push(subj);
+
+  var chip = document.getElementById('sc-' + idx + '-' + subj.replace(/\s/g,'_'));
+  if (chip) chip.className = 'schip ' + (pos !== -1 ? 'done' : 'nd');
+
+  var allSubjs = curHW ? curHW.entries.map(function(e) { return e.subject; }) : [];
+  var ndCount = subjND[name].length;
+  var btn = document.getElementById('tgl-' + idx);
+  var sts = document.getElementById('sts-' + idx);
+  var gr = document.getElementById('gr-' + idx);
+  if (ndCount === 0) {
+    subState[name] = true;
+    if (btn) btn.className = 'tgl done';
+    if (sts) sts.textContent = '';
+    if (gr) gr.classList.add('show'); // fully done — grading available
+  } else if (ndCount === allSubjs.length) {
+    subState[name] = false;
+    if (btn) btn.className = 'tgl nd';
+    if (sts) sts.textContent = '(all ' + ndCount + ')';
+    if (gr) {
+      gr.classList.remove('show'); // fully not-done — no grading
+      gradeState[name] = null;
+      gr.querySelectorAll('.gopt').forEach(function(g){ g.className = 'gopt'; });
+    }
+  } else {
+    subState[name] = false;
+    if (btn) btn.className = 'tgl partial';
+    if (sts) sts.textContent = '(' + ndCount + '/' + allSubjs.length + ')';
+    if (gr) gr.classList.add('show'); // partial — grading still allowed for what they did do
+  }
+  updateSubStats(Object.keys(subState).length);
+}
+
+function setGrade(encodedName, idx, grade) {
+  var name = decodeURIComponent(encodedName);
+  gradeState[name] = grade;
+  var gr = document.getElementById('gr-' + idx);
+  if (!gr) return;
+  gr.querySelectorAll('.gopt').forEach(function(btn) {
+    btn.className = 'gopt' + (btn.dataset.grade === grade ? ' sel-' + grade : '');
+  });
+}
+
+function updateSubStats(total) {
+  var doneCount = 0, absentCount = 0;
+  Object.keys(subState).forEach(function(name) {
+    if (absentState[name]) { absentCount++; return; }
+    if (subState[name] || (subjND[name] && subjND[name].length === 0)) doneCount++;
+  });
+  var present = total - absentCount;
+  var nd = present - doneCount;
+  var el;
+  el = document.getElementById('ssv-done'); if (el) el.textContent = doneCount;
+  el = document.getElementById('ssv-nd');   if (el) el.textContent = nd;
+  el = document.getElementById('ssv-pct');  if (el) el.textContent = present ? Math.round(doneCount/present*100) + '%' : '0%';
+}
+
+function getSubjectStatus() {
+  if (!curHW) return [];
+  return curHW.entries.map(function(e) {
+    var notDone = Object.keys(subState).filter(function(name) {
+      if (absentState[name]) return false; // absent students excluded
+      if (subState[name] && (!subjND[name] || subjND[name].length === 0)) return false;
+      return (subjND[name] || []).indexOf(e.subject) !== -1 || (!subState[name] && (!subjND[name] || subjND[name].length === 0));
+    });
+    return {subj: e.subject, notDone: notDone, complete: notDone.length === 0};
+  });
+}
+
+function buildWAMsg() {
+  if (!curHW) return '';
+  var status = getSubjectStatus();
+  var completedSubjs = status.filter(function(s) { return s.complete; }).map(function(s) { return s.subj; });
+  var incompleteSubjs = status.filter(function(s) { return !s.complete; });
+  var allStudents = Object.keys(subState);
+  var absentStudents = allStudents.filter(function(name) { return absentState[name]; });
+  var presentStudents = allStudents.filter(function(name) { return !absentState[name]; });
+  var doneCount = 0;
+  presentStudents.forEach(function(name) { if (subState[name] || (!subjND[name] || subjND[name].length === 0)) doneCount++; });
+  var total = presentStudents.length;
+  var notDoneCount = total - doneCount;
+
+  // Three scenarios:
+  //   ALL DONE  → green template (no completed/not-done lists needed)
+  //   PARTIAL   → yellow template (list students who haven't done, grouped by subject)
+  //   NONE DONE → red template (whole class missed, no individual list needed)
+  var isAllDone = notDoneCount === 0;
+  var isNoneDone = doneCount === 0 && total > 0;
+
+  var tmpl;
+  if (isAllDone) tmpl = cfg.tmplAll || DEFAULT_TMPL_ALL;
+  else if (isNoneDone) tmpl = cfg.tmplNone || DEFAULT_TMPL_NONE;
+  else tmpl = cfg.tmplPartial || DEFAULT_TMPL_PARTIAL;
+
+  // {COMPLETED_LIST} — kept for back-compat (older templates may still use it)
+  var completedList = completedSubjs.length
+    ? '• Subjects: ' + completedSubjs.join(', ')
+    : '(none)';
+
+  // {NOT_DONE_LIST} — new format:
+  //   📘 Subject Name
+  //   • Student 1
+  //   • Student 2
+  //
+  //   📘 Next Subject
+  //   • Student 3
+  var notDoneList = '';
+  if (incompleteSubjs.length) {
+    notDoneList = incompleteSubjs.map(function(s) {
+      return '📘 ' + s.subj + '\n' + s.notDone.map(function(n) { return '• ' + n; }).join('\n');
+    }).join('\n\n');
+  }
+
+  var msg = tmpl
+    .replace(/\{DATE\}/g, fmtDateShort(curHW.date))
+    .replace(/\{CLASS\}/g, curHW.cls)
+    .replace(/\{COMPLETED_LIST\}/g, completedList)
+    .replace(/\{NOT_DONE_LIST\}/g, notDoneList)
+    .replace(/\{DONE_COUNT\}/g, String(doneCount))
+    .replace(/\{TOTAL_COUNT\}/g, String(total))
+    .replace(/\{SCHOOL_NAME\}/g, cfg.schoolName);
+
+  return msg;
+}
+
+function openWA() {
+  if (!curHW) { showToast('Load a class first', true); return; }
+  document.getElementById('waBub').textContent = buildWAMsg();
+  openModal('waModal');
+}
+
+function copyWA() {
+  var msg = buildWAMsg();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(msg).then(function() { showToast('Message copied!'); }).catch(function() { fallbackCopy(msg); });
+  } else { fallbackCopy(msg); }
+}
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta);
+  showToast('Message copied!');
+}
+
+async function saveSubs() {
+  if (!curHW) { showToast('Load a class first', true); return; }
+  showLoad('Saving submissions…');
+  var rows = Object.keys(subState).map(function(name) {
+    var status;
+    if (absentState[name]) status = 'Absent';
+    else if (subState[name]) status = 'Done';
+    else if (subjND[name] && subjND[name].length < curHW.entries.length && subjND[name].length > 0) status = 'Partial';
+    else status = 'Not Done';
+    return {date: curHW.date, class: curHW.cls, student_name: name, status: status, subjects_not_done: absentState[name] ? '' : (subjND[name] || []).join(', '), grade: gradeState[name] || '', marked_by: 'Teacher', marked_at: new Date().toISOString()};
+  });
+
+  // Build a lookup of subject -> homework text for this date
+  var hwBySubject = {};
+  curHW.entries.forEach(function(e) { hwBySubject[e.subject] = e.hwText; });
+
+  // Not-done students: store the specific pending subjects + homework text
+  var ndStudents = Object.keys(subState).filter(function(name) { return !absentState[name] && !subState[name] && subjND[name] && subjND[name].length > 0; });
+  ndStudents.forEach(function(name) {
+    var items = subjND[name].map(function(subj) { return {subject: subj, hwText: hwBySubject[subj] || ''}; });
+    savePendingDetailed(name, curHW.cls, curHW.date, 'Not Done', items);
+  });
+
+  // Absent students: ALL subjects of the day are pending
+  var absStudents = Object.keys(subState).filter(function(name) { return absentState[name]; });
+  absStudents.forEach(function(name) {
+    var items = curHW.entries.map(function(e) { return {subject: e.subject, hwText: e.hwText}; });
+    savePendingDetailed(name, curHW.cls, curHW.date, 'Absent', items);
+  });
+
+  var ok = await callSheet({action: 'saveSubmissions', rows: rows});
+  hideLoad();
+  if (ok) {
+    autoBackup('Submissions', curHW.cls + ' · ' + fmtDate(curHW.date), {type:'submissions',rows:rows});
+    showToast('Saved! Opening WhatsApp…');
+    setTimeout(openWA, 700);
+  }
+}
+
+// Pending — detailed (one record per student per date, with the list of pending homework items)
+function savePendingDetailed(name, cls, date, reason, items) {
+  var pending = getPending();
+  // Remove any existing record for same student+class+date (re-save overwrites)
+  pending = pending.filter(function(p) { return !(p.name === name && p.cls === cls && p.date === date); });
+  pending.push({
+    id: Date.now() + '-' + Math.random().toString(36).slice(2,5),
+    name: name, cls: cls, date: date, reason: reason || 'Not Done',
+    items: items || [],
+    saved: new Date().toISOString()
+  });
+  localStorage.setItem('eyespy_pending', JSON.stringify(pending));
+}
+
+// Legacy wrapper (kept for compatibility)
+function savePending(names, cls, date, reason) {
+  names.forEach(function(name) { savePendingDetailed(name, cls, date, reason, []); });
+}
+function getPending() { try { return JSON.parse(localStorage.getItem('eyespy_pending') || '[]'); } catch(e) { return []; } }
+function renderPending() {
+  var p = getPending();
+  var el = document.getElementById('pendList');
+  if (!p.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">✅ No pending submissions right now</div>'; return; }
+  el.innerHTML = p.map(function(x) {
+    var reasonTag = x.reason === 'Absent'
+      ? '<span class="pill" style="background:rgba(99,102,241,.15);color:#a5b4fc;margin-left:6px">Absent</span>'
+      : '<span class="pill pr" style="margin-left:6px">Not Done</span>';
+    var itemsHtml = '';
+    if (x.items && x.items.length) {
+      itemsHtml = '<div style="margin-top:5px;font-size:11px;color:var(--body);line-height:1.6">' +
+        x.items.map(function(it) { var hw = it.hwText || recoverHWText(x.cls, x.date, it.subject); return '• <strong>' + it.subject + '</strong>' + (hw ? ': ' + hw : ''); }).join('<br>') +
+      '</div>';
+    }
+    return '<div class="penditem" style="flex-direction:column;align-items:stretch">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+        '<div><div style="font-size:14px;font-weight:600">' + x.name + reasonTag + '</div><div style="font-size:11px;color:var(--muted)">Class ' + x.cls + ' · ' + fmtDate(x.date) + '</div></div>' +
+        '<button style="padding:6px 12px;background:rgba(16,185,129,.13);border:1px solid rgba(16,185,129,.25);border-radius:6px;color:var(--ok);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" data-resolve="' + x.id + '">✓ Resolved</button>' +
+      '</div>' + itemsHtml +
+    '</div>';
+  }).join('');
+}
+function resolvePending(id) {
+  var p = getPending().filter(function(x) { return x.id !== id; });
+  localStorage.setItem('eyespy_pending', JSON.stringify(p));
+  callSheet({action: 'updateSubmission', pendingId: id, status: 'Late Submitted'});
+  renderPending();
+  showToast('Marked as late submitted');
+}
+
+// ═══════════════════════════════════════════
+// REPORTS
+// ═══════════════════════════════════════════
+function renderReports() { renderClsHeat(); renderStuHeat(); renderClsRep(); renderDateRep(); renderStuList(); renderSubjRep(); }
+
+function cpct(cls, day) { return 65 + (cls.charCodeAt(0) + cls.charCodeAt(cls.length-1) + day*7) % 35; }
+function pcol(p) { return p>=95?'var(--h4)':p>=80?'var(--h3)':p>=65?'var(--h2)':p>=50?'var(--h1)':'var(--hx)'; }
+
+function renderClsHeat() {
+  var cls = getClassList();
+  var html = '<div class="hdh">' + JUNE.map(function(d) { return '<div class="hdl">' + d + '</div>'; }).join('') + '</div>';
+  cls.forEach(function(c) {
+    html += '<div class="hrow"><div class="hrl">' + c + '</div>';
+    JUNE.forEach(function(d) { var p = cpct(c,d); html += '<div class="hcl" style="background:' + pcol(p) + '" title="' + c + '·Jun' + d + '·' + p + '%"></div>'; });
+    html += '</div>';
+  });
+  document.getElementById('clsHeat').innerHTML = html;
+}
+
+function renderStuHeat() {
+  var cls = document.getElementById('hmCls').value || '5-A';
+  var students = (cfg.students || DUMMY_STUDENTS)[cls] || [];
+  var html = '<div class="hdh" style="padding-left:66px">' + JUNE.map(function(d) { return '<div class="hdl">' + d + '</div>'; }).join('') + '</div>';
+  students.forEach(function(name) {
+    html += '<div class="hrow"><div class="hrl" style="width:60px">' + name.split(' ')[0] + '</div>';
+    JUNE.forEach(function(d) { var ok = (name.charCodeAt(0)+d*13)%10 < 8; html += '<div class="hcl" style="background:' + (ok?'var(--h4)':'var(--hx)') + '" title="' + name.split(' ')[0] + '·Jun' + d + '·' + (ok?'Done':'Not done') + '"></div>'; });
+    html += '</div>';
+  });
+  document.getElementById('stuHeat').innerHTML = html;
+}
+
+function renderClsRep() {
+  var cls = getClassList();
+  var data = cls.map(function(c) { return {c:c, p:Math.round(JUNE.reduce(function(s,d) { return s+cpct(c,d); }, 0)/JUNE.length)}; }).sort(function(a,b) { return b.p-a.p; });
+  document.getElementById('clsBar').innerHTML = data.map(function(r) {
+    var col = r.p>=85?'var(--ok)':r.p>=70?'var(--gold)':'var(--bad)';
+    return '<div class="bcr"><div class="bcl">' + r.c + '</div><div class="bct"><div class="bcf" style="width:' + r.p + '%;background:' + col + '">' + r.p + '%</div></div></div>';
+  }).join('');
+  document.getElementById('clsTbl').innerHTML = '<thead><tr><th>Class</th><th>Days</th><th>Done</th><th>Not Done</th><th>Rate</th></tr></thead><tbody>' +
+    data.map(function(r) {
+      var t=JUNE.length*30, d=Math.round(t*r.p/100);
+      var pc=r.p>=85?'pg':r.p>=70?'py':'pr';
+      return '<tr><td><strong>' + r.c + '</strong></td><td>' + JUNE.length + '</td><td style="color:var(--ok)">' + d + '</td><td style="color:var(--bad)">' + (t-d) + '</td><td><span class="pill ' + pc + '">' + r.p + '%</span></td></tr>';
+    }).join('') + '</tbody>';
+}
+
+function renderDateRep() {
+  var cls = getClassList();
+  var days = JUNE.slice(0, 10);
+  var hw = {1:'Maths: Ex 4.3', 3:'English: Para', 5:'Science: Ch7', 8:'Hindi: Essay', 10:'SST: Map'};
+  document.getElementById('dateBar').innerHTML = days.map(function(d) {
+    var p = Math.round(cls.reduce(function(s,c) { return s+cpct(c,d); }, 0)/cls.length);
+    var col = p>=85?'var(--ok)':p>=70?'var(--gold)':'var(--bad)';
+    return '<div class="bcr"><div class="bcl">Jun ' + d + '</div><div class="bct"><div class="bcf" style="width:' + p + '%;background:' + col + '">' + p + '%</div></div></div>';
+  }).join('');
+  document.getElementById('dateTbl').innerHTML = '<thead><tr><th>Date</th><th>Homework</th><th>Rate</th></tr></thead><tbody>' +
+    days.map(function(d) {
+      var p = Math.round(cls.reduce(function(s,c) { return s+cpct(c,d); }, 0)/cls.length);
+      var pc = p>=85?'pg':p>=70?'py':'pr';
+      return '<tr><td><strong>Jun ' + d + '</strong></td><td style="font-size:11px">' + (hw[d]||'Multiple subjects') + '</td><td><span class="pill ' + pc + '">' + p + '%</span></td></tr>';
+    }).join('') + '</tbody>';
+}
+
+function spct(name, cls) { return 60 + ((name.charCodeAt(0) + name.charCodeAt(2) + cls.charCodeAt(0)) * 7) % 40; }
+function sdone(name, cls) { return Math.round(120 * spct(name, cls) / 100); }
+
+function renderStuList() {
+  var clsF = document.getElementById('stuClsF').value;
+  var q = document.getElementById('stuSrch').value.toLowerCase();
+  var all = [];
+  Object.entries(cfg.students || DUMMY_STUDENTS).forEach(function(pair) {
+    pair[1].forEach(function(name) { all.push({name:name, cls:pair[0]}); });
+  });
+  if (clsF) all = all.filter(function(s) { return s.cls === clsF; });
+  if (q) all = all.filter(function(s) { return s.name.toLowerCase().indexOf(q) !== -1; });
+  all.sort(function(a,b) { return spct(b.name,b.cls) - spct(a.name,a.cls); });
+  document.getElementById('stuListEl').innerHTML = all.length ? all.map(function(s) {
+    var p = spct(s.name, s.cls), pc = p>=85?'hi':p>=70?'mid':'lo';
+    var barColor = p>=85?'var(--ok)':p>=70?'var(--gold)':'var(--bad)';
+    return '<div class="stuc" data-stuname="' + encodeURIComponent(s.name) + '" data-stucls="' + s.cls + '">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:5px">' +
+          '<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + s.name + '</div>' +
+          '<div class="sp ' + pc + '" style="font-size:14px;flex-shrink:0">' + p + '%</div>' +
+        '</div>' +
+        '<div style="height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:4px">' +
+          '<div style="height:100%;width:' + p + '%;background:' + barColor + ';border-radius:2px"></div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">' +
+          '<span>Class ' + s.cls + '</span>' +
+          '<span>' + sdone(s.name,s.cls) + '/120</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') : '<div style="text-align:center;padding:28px;color:var(--muted);font-size:13px">No students found</div>';
+}
+
+function showStuProfile(encodedName, cls) {
+  var name = decodeURIComponent(encodedName);
+  var p = spct(name, cls), done = sdone(name, cls), nd = 120 - done;
+  var pc = p>=85?'hi':p>=70?'mid':'lo';
+  var mini = JUNE.map(function(d) {
+    var ok = (name.charCodeAt(0)+d*13)%10 < 8;
+    return '<div style="width:13px;height:13px;border-radius:2px;background:' + (ok?'var(--h4)':'var(--hx)') + ';margin:1px" title="Jun ' + d + ': ' + (ok?'Done':'Not done') + '"></div>';
+  }).join('');
+  var subBars = SUBJ_ALL.map(function(sub) {
+    var sp = 70 + (name.charCodeAt(0) + sub.charCodeAt(0)) % 30;
+    var col = sp>=85?'var(--ok)':sp>=70?'var(--gold)':'var(--bad)';
+    return '<div class="bcr"><div class="bcl" style="width:80px;font-size:10px">' + sub + '</div><div class="bct"><div class="bcf" style="width:' + sp + '%;background:' + col + '">' + sp + '%</div></div></div>';
+  }).join('');
+  var logoSrc = (SCHOOL_LOGO && SCHOOL_LOGO !== '__LOGO_PLACEHOLDER__') ? SCHOOL_LOGO : '';
+  document.getElementById('stuProfV').innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px" data-backstu="1">← All Students</div>' +
+    '<div class="card" style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' +
+      (logoSrc ? '<img src="' + logoSrc + '" style="width:36px;height:36px;border-radius:50%;object-fit:contain;background:#fff;padding:2px;flex-shrink:0">' : '<div style="width:36px;height:36px;border-radius:50%;background:var(--goldd);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>') +
+      '<div><div style="font-size:16px;font-weight:700">' + name + '</div><div style="font-size:11px;color:var(--muted)">Class ' + cls + ' · 2025–26</div></div>' +
+    '</div>' +
+    '<div class="two" style="margin-bottom:10px">' +
+      '<div class="card" style="text-align:center;padding:11px 7px"><div style="font-family:\'DM Mono\',monospace;font-size:20px;color:var(--ok)">' + done + '</div><div style="font-size:10px;color:var(--muted);margin-top:3px">Submitted</div></div>' +
+      '<div class="card" style="text-align:center;padding:11px 7px"><div style="font-family:\'DM Mono\',monospace;font-size:20px;color:var(--bad)">' + nd + '</div><div style="font-size:10px;color:var(--muted);margin-top:3px">Not Done</div></div>' +
+    '</div>' +
+    '<div class="sec">June 2026 — heat</div>' +
+    '<div class="card"><div style="display:flex;flex-wrap:wrap">' + mini + '</div><div style="display:flex;gap:10px;margin-top:7px;font-size:10px;color:var(--muted)"><span><span style="display:inline-block;width:9px;height:9px;background:var(--h4);border-radius:2px;margin-right:3px;vertical-align:middle"></span>Done</span><span><span style="display:inline-block;width:9px;height:9px;background:var(--hx);border-radius:2px;margin-right:3px;vertical-align:middle"></span>Not done</span></div></div>' +
+    '<div class="sec">Subject performance</div>' +
+    '<div class="card"><div class="bcc">' + subBars + '</div></div>' +
+    '<button class="btn btn-o" style="margin-top:10px" data-expstu="1" data-name="' + encodeURIComponent(name) + '" data-cls="' + cls + '">⬇ Export for Result Card</button>';
+  document.getElementById('stuListV').style.display = 'none';
+  document.getElementById('stuProfV').style.display = 'block';
+}
+
+function exportSingleStudent(encodedName, cls) {
+  var name = decodeURIComponent(encodedName);
+  openPrintWin(buildParentHTML(name, cls, ''));
+}
+
+function renderSubjRep() {
+  var data = SUBJ_ALL.map(function(sub) {
+    var nd = 10 + (sub.charCodeAt(0)%25), total = 80 + (sub.charCodeAt(1)%40);
+    return {sub:sub, nd:nd, total:total, p:Math.round((1-nd/total)*100)};
+  }).sort(function(a,b) { return a.p-b.p; });
+  document.getElementById('subjBar').innerHTML = data.map(function(r) {
+    var col = r.p>=85?'var(--ok)':r.p>=70?'var(--gold)':'var(--bad)';
+    return '<div class="bcr"><div class="bcl" style="font-size:10px;width:80px">' + r.sub + '</div><div class="bct"><div class="bcf" style="width:' + r.p + '%;background:' + col + '">' + r.p + '%</div></div></div>';
+  }).join('');
+  document.getElementById('subjTbl').innerHTML = '<thead><tr><th>Subject</th><th>Total</th><th>Not Done</th><th>Rate</th></tr></thead><tbody>' +
+    data.map(function(r) {
+      var pc = r.p>=85?'pg':r.p>=70?'py':'pr';
+      return '<tr><td><strong>' + r.sub + '</strong></td><td>' + r.total + '</td><td style="color:var(--bad)">' + r.nd + '</td><td><span class="pill ' + pc + '">' + r.p + '%</span></td></tr>';
+    }).join('') + '</tbody>';
+}
+
+// Parent Report
+function loadPRStudents() {
+  var cls = document.getElementById('prCls').value;
+  var sel = document.getElementById('prStu');
+  sel.innerHTML = '<option value="">Select…</option>';
+  if (!cls) return;
+  ((cfg.students || DUMMY_STUDENTS)[cls] || []).forEach(function(s) { sel.innerHTML += '<option>' + s + '</option>'; });
+}
+
+function buildParentHTML(name, cls, note) {
+  var p = spct(name, cls), done = sdone(name, cls), nd = 120 - done;
+  var logoSrc = (SCHOOL_LOGO && SCHOOL_LOGO !== '__LOGO_PLACEHOLDER__') ? SCHOOL_LOGO : '';
+  var months = ['Apr','May','Jun','Jul','Aug','Sep'];
+  var monthBars = months.map(function(m, i) {
+    var mp = 55 + (name.charCodeAt(0) + i*11) % 45;
+    var col = mp>=85?'#10b981':mp>=70?'#f0b429':'#ef4444';
+    return '<div style="margin-bottom:5px"><div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:2px"><span>' + m + '</span><span style="font-weight:700">' + mp + '%</span></div><div style="height:7px;background:#eee;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + mp + '%;background:' + col + ';border-radius:3px"></div></div></div>';
+  }).join('');
+  var subjBars = SUBJ_ALL.map(function(sub) {
+    var sp = 70 + (name.charCodeAt(0) + sub.charCodeAt(0)) % 30;
+    var col = sp>=85?'#10b981':sp>=70?'#f0b429':'#ef4444';
+    return '<div class="prsr"><div class="prsn">' + sub + '</div><div class="prsb"><div class="prsbf" style="width:' + sp + '%;background:' + col + '"></div></div><div class="prsp">' + sp + '%</div></div>';
+  }).join('');
+  var pColor = p>=85?'#10b981':p>=70?'#d97706':'#dc2626';
+  return '<div class="prcard">' +
+    '<div class="prh"><div style="display:flex;align-items:center;gap:10px">' +
+      (logoSrc ? '<img class="prlogo" src="' + logoSrc + '" alt="">' : '') +
+      '<div><div class="prhs">' + cfg.schoolName + '</div><div class="prht">Homework Progress Report · June 2026</div></div>' +
+    '</div><div style="text-align:right;font-size:9px;color:#888">EyeSpy · ' + (cfg.schWeb||'') + '</div></div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px">' +
+      '<div><div style="font-size:16px;font-weight:700;color:#1a2744">' + name + '</div><div style="font-size:10px;color:#555;margin-top:2px">Class ' + cls + ' · Academic Year 2025–26</div></div>' +
+      '<div style="text-align:right"><div style="font-size:32px;font-weight:700;color:' + pColor + ';line-height:1">' + p + '%</div><div style="font-size:9px;color:#666">Overall</div></div>' +
+    '</div>' +
+    '<div class="prbar"><div class="prbarf" style="width:' + p + '%;background:' + pColor + '"></div></div>' +
+    '<div style="display:flex;gap:20px;font-size:10px;color:#555;margin-bottom:12px"><span>✅ Submitted: <strong>' + done + '</strong></span><span>❌ Not Done: <strong>' + nd + '</strong></span><span>📚 Total: <strong>120</strong></span></div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+      '<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#1a2744;margin-bottom:6px">Subject Performance</div>' + subjBars + '</div>' +
+      '<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#1a2744;margin-bottom:6px">Monthly Trend</div>' + monthBars + '</div>' +
+    '</div>' +
+    (note ? '<div style="margin-top:10px;background:#f8f9fa;border:1px solid #e9ecef;border-radius:5px;padding:9px 11px"><div style="font-size:10px;font-weight:700;color:#1a2744;margin-bottom:4px">Teacher\'s Note</div><div style="font-size:11px;line-height:1.6;color:#333">' + note + '</div></div>' : '') +
+    '<div class="prfoot"><span>Printed: ' + new Date().toLocaleDateString('en-IN') + '</span><span>Homework Teacher · ' + cfg.schoolName + '</span></div>' +
+  '</div>';
+}
+
+function previewParentReport() {
+  var cls = document.getElementById('prCls').value;
+  var name = document.getElementById('prStu').value;
+  if (!cls || !name) { showToast('Select class and student', true); return; }
+  var pr = document.getElementById('prPreview');
+  pr.innerHTML = buildParentHTML(name, cls, document.getElementById('prNote').value);
+  pr.style.display = 'block';
+}
+
+function printParentReport() {
+  var cls = document.getElementById('prCls').value;
+  var name = document.getElementById('prStu').value;
+  if (!cls || !name) { showToast('Select class and student', true); return; }
+  openPrintWin(buildParentHTML(name, cls, document.getElementById('prNote').value));
+}
+
+function downloadCSV(filename, csvText) {
+  var blob = new Blob([csvText], {type: 'text/csv;charset=utf-8;'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+}
+
+function csvEscape(v) {
+  v = String(v == null ? '' : v);
+  if (v.indexOf(',') !== -1 || v.indexOf('"') !== -1 || v.indexOf('\n') !== -1) {
+    return '"' + v.replace(/"/g, '""') + '"';
+  }
+  return v;
+}
+
+function exportReport(type) {
+  var clsList = getClassList();
+  var stuData = cfg.students || DUMMY_STUDENTS;
+  var html = '';
+  var style = '.prcard{max-width:620px;margin:0 auto}.prh{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1a2744;padding-bottom:9px;margin-bottom:11px}.prhs{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#1a2744}.prlogo{width:42px;height:42px;object-fit:contain}.prbar{width:100%;height:10px;background:#eee;border-radius:5px;margin:5px 0;overflow:hidden}.prbarf{height:100%;border-radius:5px}.prsr{display:flex;align-items:center;gap:7px;margin-bottom:4px}.prsn{font-size:10px;font-weight:600;width:78px}.prsb{flex:1;height:7px;background:#eee;border-radius:3px;overflow:hidden}.prsbf{height:100%;border-radius:3px}.prsp{font-size:9px;font-weight:600;width:28px;text-align:right}.prfoot{border-top:1px solid #eee;margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;font-size:9px;color:#888}';
+
+  if (type === 'class') {
+    // ── CSV EXPORT ──
+    var data = clsList.map(function(c) { return {c:c, p:Math.round(JUNE.reduce(function(s,d) { return s+cpct(c,d); }, 0)/JUNE.length)}; }).sort(function(a,b) { return b.p-a.p; });
+    var lines = [];
+    lines.push(['Class','Days Tracked','Submitted','Not Done','Completion %'].map(csvEscape).join(','));
+    data.forEach(function(r) {
+      var t = JUNE.length*30, d = Math.round(t*r.p/100);
+      lines.push([r.c, JUNE.length, d, t-d, r.p + '%'].map(csvEscape).join(','));
+    });
+    var header = '# ' + cfg.schoolName + ' — Monthly Class Report — June 2026\n# Generated by EyeSpy on ' + new Date().toLocaleDateString('en-IN') + '\n';
+    downloadCSV('Class_Report_June_2026.csv', header + lines.join('\n'));
+    showToast('Class report CSV downloaded');
+    closeModal('expModal');
+    return;
+  } else if (type === 'student') {
+    var all = [];
+    Object.entries(stuData).forEach(function(pair) { pair[1].forEach(function(n) { all.push({n:n, c:pair[0]}); }); });
+    all.sort(function(a,b) { return spct(b.n,b.c)-spct(a.n,a.c); });
+    html = '<h2 style="font-family:Arial;color:#1a2744">' + cfg.schoolName + '<br><small style="font-size:14px;color:#666">Student Annual Summary 2025–26</small></h2>' +
+      '<table border="1" cellpadding="8" cellspacing="0" style="width:100%;border-collapse:collapse;font-family:Arial;font-size:12px">' +
+      '<tr style="background:#1a2744;color:#fff"><th>Student</th><th>Class</th><th>Total</th><th>Done</th><th>Not Done</th><th>%</th></tr>' +
+      all.map(function(s) {
+        var p=spct(s.n,s.c), d=sdone(s.n,s.c);
+        return '<tr><td><strong>' + s.n + '</strong></td><td>' + s.c + '</td><td>120</td><td style="color:green">' + d + '</td><td style="color:red">' + (120-d) + '</td><td style="font-weight:700;color:' + (p>=85?'green':p>=70?'darkorange':'red') + '">' + p + '%</td></tr>';
+      }).join('') + '</table>';
+  } else if (type === 'subject') {
+    var sd = SUBJ_ALL.map(function(sub) {
+      var nd=10+(sub.charCodeAt(0)%25), total=80+(sub.charCodeAt(1)%40);
+      return {sub:sub, nd:nd, total:total, p:Math.round((1-nd/total)*100)};
+    }).sort(function(a,b) { return a.p-b.p; });
+    html = '<h2 style="font-family:Arial;color:#1a2744">' + cfg.schoolName + '<br><small>Subject Analysis — June 2026</small></h2>' +
+      '<table border="1" cellpadding="8" cellspacing="0" style="width:100%;border-collapse:collapse;font-family:Arial;font-size:13px">' +
+      '<tr style="background:#1a2744;color:#fff"><th>Subject</th><th>Total</th><th>Not Submitted</th><th>Rate</th></tr>' +
+      sd.map(function(r) {
+        return '<tr><td><strong>' + r.sub + '</strong></td><td>' + r.total + '</td><td style="color:red">' + r.nd + '</td><td style="font-weight:700;color:' + (r.p>=85?'green':r.p>=70?'darkorange':'red') + '">' + r.p + '%</td></tr>';
+      }).join('') + '</table>';
+  } else if (type === 'notdone') {
+    // ── NOT-DONE DETAIL REPORT (CSV) — only shows the specific HW not done, with date ──
+    exportNotDoneReport();
+    return;
+  }
+  if (html) openPrintWin('<style>body{font-family:Arial;margin:24px;color:#111}@media print{body{margin:0}}' + style + '</style>' + html);
+  closeModal('expModal');
+}
+
+// Not-Done detail report — pulls from saved submission backups + live state
+function exportNotDoneReport() {
+  // Gather from pending records (real not-done data) + current session
+  var pending = getPending();
+  var rows = [];
+  // From live current session (if a class is loaded)
+  if (curHW) {
+    var status = getSubjectStatus();
+    status.forEach(function(s) {
+      if (!s.complete) {
+        s.notDone.forEach(function(name) {
+          var hwEntry = curHW.entries.filter(function(e){ return e.subject === s.subj; })[0];
+          rows.push({
+            date: fmtDateShort(curHW.date),
+            cls: curHW.cls,
+            student: name,
+            subject: s.subj,
+            homework: hwEntry ? hwEntry.hwText : ''
+          });
+        });
+      }
+    });
+  }
+  // From pending (not-done students recorded in past sessions)
+  pending.filter(function(p){ return p.reason !== 'Absent'; }).forEach(function(p) {
+    // avoid duplicates already added from live session
+    var dup = rows.some(function(r){ return r.student === p.name && r.cls === p.cls && r.date === fmtDateShort(p.date); });
+    if (!dup) {
+      rows.push({ date: fmtDateShort(p.date), cls: p.cls, student: p.name, subject: '(see record)', homework: '' });
+    }
+  });
+
+  if (!rows.length) {
+    showToast('No not-done records yet. Save a submission first.', true);
+    closeModal('expModal');
+    return;
+  }
+
+  var lines = [];
+  lines.push(['Date','Class','Student','Subject Not Done','Homework Details'].map(csvEscape).join(','));
+  rows.forEach(function(r) {
+    lines.push([r.date, r.cls, r.student, r.subject, r.homework].map(csvEscape).join(','));
+  });
+  var header = '# ' + cfg.schoolName + ' — Homework NOT DONE Report\n# Only lists the specific homework each student did not complete\n# Generated by EyeSpy on ' + new Date().toLocaleDateString('en-IN') + '\n';
+  downloadCSV('Not_Done_Report.csv', header + lines.join('\n'));
+  showToast('Not-Done report CSV downloaded');
+  closeModal('expModal');
+}
+
+function openPrintWin(body) {
+  var win = window.open('', '_blank', 'width=860,height=900');
+  win.document.write('<!DOCTYPE html><html><head></head><body>' + body + '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},600);}<\/script></body></html>');
+  win.document.close();
+}
+
+// ═══════════════════════════════════════════
+// PENDING HOMEWORK FOLLOW-UP REPORT
+// ═══════════════════════════════════════════
+function onPendScopeChange() {
+  var scope = document.getElementById('pendScope').value;
+  document.getElementById('pendClsWrap').style.display = (scope === 'class') ? 'block' : 'none';
+  document.getElementById('pendStuWrap').style.display = (scope === 'student') ? 'block' : 'none';
+  if (scope === 'student') populatePendStudents();
+  renderPendingReport();
+}
+
+function populatePendStudents() {
+  // Show only students who actually have pending items
+  var pending = getPending();
+  var names = [];
+  pending.forEach(function(p) {
+    var key = p.name + '|' + p.cls;
+    if (names.indexOf(key) === -1) names.push(key);
+  });
+  names.sort();
+  var sel = document.getElementById('pendStu');
+  sel.innerHTML = '<option value="">Select…</option>';
+  names.forEach(function(key) {
+    var parts = key.split('|');
+    sel.innerHTML += '<option value="' + encodeURIComponent(key) + '">' + parts[0] + ' (Class ' + parts[1] + ')</option>';
+  });
+}
+
+// Returns filtered pending records based on current scope selection
+function getFilteredPending() {
+  var scope = document.getElementById('pendScope').value;
+  var pending = getPending();
+  if (scope === 'class') {
+    var cls = document.getElementById('pendCls').value;
+    if (cls) pending = pending.filter(function(p) { return p.cls === cls; });
+  } else if (scope === 'student') {
+    var sel = document.getElementById('pendStu').value;
+    if (sel) {
+      var parts = decodeURIComponent(sel).split('|');
+      pending = pending.filter(function(p) { return p.name === parts[0] && p.cls === parts[1]; });
+    } else {
+      pending = [];
+    }
+  }
+  // Sort by date ascending (oldest first — those need follow-up most)
+  pending.sort(function(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  return pending;
+}
+
+function renderPendingReport() {
+  var pending = getFilteredPending();
+  var body = document.getElementById('pendReportBody');
+
+  // Stats
+  var studentSet = {}, itemCount = 0, absentCount = 0, oldestDate = null;
+  pending.forEach(function(p) {
+    studentSet[p.name + '|' + p.cls] = true;
+    var n = (p.items && p.items.length) ? p.items.length : 1;
+    itemCount += n;
+    if (p.reason === 'Absent') absentCount += n;
+    if (!oldestDate || p.date < oldestDate) oldestDate = p.date;
+  });
+  document.getElementById('pendTotalStu').textContent = Object.keys(studentSet).length;
+  document.getElementById('pendTotalItems').textContent = itemCount;
+  document.getElementById('pendAbsent').textContent = absentCount;
+  document.getElementById('pendOldest').textContent = oldestDate ? fmtDateShort(oldestDate) : '—';
+
+  if (!pending.length) {
+    body.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">✅</div><div style="font-size:14px">No pending homework!<br>Everyone is up to date.</div></div>';
+    return;
+  }
+
+  var scope = document.getElementById('pendScope').value;
+  var html = '';
+
+  if (scope === 'student') {
+    // Date-wise list for one student
+    html += '<div class="sec">Pending homework — date wise</div>';
+    pending.forEach(function(p) {
+      var reasonTag = p.reason === 'Absent'
+        ? '<span class="pill" style="background:rgba(99,102,241,.15);color:#a5b4fc">Absent</span>'
+        : '<span class="pill pr">Not Done</span>';
+      var items = (p.items && p.items.length)
+        ? p.items.map(function(it) { var hw = it.hwText || recoverHWText(p.cls, p.date, it.subject); return '<div style="font-size:13px;color:var(--body);line-height:1.7">• <strong>' + it.subject + '</strong>' + (hw ? ': ' + hw : '') + '</div>'; }).join('')
+        : '<div style="font-size:13px;color:var(--muted)">(details not recorded)</div>';
+      html += '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><strong style="font-size:13px">' + fmtDate(p.date) + '</strong>' + reasonTag + '</div>' + items + '</div>';
+    });
+  } else {
+    // Group by student (school or class scope)
+    var byStudent = {};
+    pending.forEach(function(p) {
+      var key = p.name + '|' + p.cls;
+      if (!byStudent[key]) byStudent[key] = [];
+      byStudent[key].push(p);
+    });
+    var keys = Object.keys(byStudent).sort();
+    html += '<div class="sec">' + keys.length + ' student' + (keys.length !== 1 ? 's' : '') + ' with pending homework</div>';
+    keys.forEach(function(key) {
+      var parts = key.split('|');
+      var recs = byStudent[key];
+      var totalItems = recs.reduce(function(s, r) { return s + ((r.items && r.items.length) ? r.items.length : 1); }, 0);
+      var detailHtml = recs.map(function(p) {
+        var rtag = p.reason === 'Absent' ? ' <span style="color:#a5b4fc;font-size:11px">(absent)</span>' : '';
+        var items = (p.items && p.items.length)
+          ? p.items.map(function(it) { var hw = it.hwText || recoverHWText(p.cls, p.date, it.subject); return it.subject + (hw ? ' — ' + hw : ''); }).join('; ')
+          : '(details not recorded)';
+        return '<div style="font-size:12px;color:var(--body);line-height:1.6;margin-top:3px">📅 ' + fmtDateShort(p.date) + rtag + ': ' + items + '</div>';
+      }).join('');
+      html += '<div class="card">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<div><strong style="font-size:14px">' + parts[0] + '</strong> <span style="font-size:11px;color:var(--muted)">Class ' + parts[1] + '</span></div>' +
+          '<span class="pill pr">' + totalItems + ' pending</span>' +
+        '</div>' + detailHtml +
+      '</div>';
+    });
+  }
+  body.innerHTML = html;
+}
+
+// Recover homework text from the local store if a pending item is missing it
+function recoverHWText(cls, date, subject) {
+  var localHW = getLocalHW(cls, date);
+  if (!localHW) return '';
+  var match = localHW.filter(function(e) { return e.subject === subject; })[0];
+  return match ? match.hwText : '';
+}
+
+function buildPendingRows() {
+  // Flatten filtered pending into one row per pending item (for CSV / print)
+  var pending = getFilteredPending();
+  var rows = [];
+  pending.forEach(function(p) {
+    if (p.items && p.items.length) {
+      p.items.forEach(function(it) {
+        var hw = it.hwText || recoverHWText(p.cls, p.date, it.subject);
+        rows.push({date: p.date, cls: p.cls, student: p.name, reason: p.reason, subject: it.subject, homework: hw});
+      });
+    } else {
+      rows.push({date: p.date, cls: p.cls, student: p.name, reason: p.reason, subject: '(not recorded)', homework: ''});
+    }
+  });
+  rows.sort(function(a, b) {
+    if (a.cls !== b.cls) return a.cls < b.cls ? -1 : 1;
+    if (a.student !== b.student) return a.student < b.student ? -1 : 1;
+    return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+  });
+  return rows;
+}
+
+function downloadPendingCSV() {
+  var rows = buildPendingRows();
+  if (!rows.length) { showToast('No pending homework to export', true); return; }
+  var scope = document.getElementById('pendScope').value;
+  var scopeLabel = scope === 'class' ? ('Class_' + (document.getElementById('pendCls').value || 'All'))
+    : scope === 'student' ? 'Student' : 'School';
+  var lines = [];
+  lines.push(['Date','Class','Student','Subject','Pending Homework','Reason'].map(csvEscape).join(','));
+  rows.forEach(function(r) {
+    lines.push([fmtDateShort(r.date), r.cls, r.student, r.subject, r.homework, r.reason].map(csvEscape).join(','));
+  });
+  var header = '# ' + cfg.schoolName + ' — Pending Homework Follow-up Report (' + scopeLabel + ')\n# Generated by EyeSpy on ' + new Date().toLocaleDateString('en-IN') + '\n';
+  downloadCSV('Pending_Followup_' + scopeLabel + '.csv', header + lines.join('\n'));
+  showToast('Pending report CSV downloaded');
+}
+
+function printPendingReport() {
+  var rows = buildPendingRows();
+  if (!rows.length) { showToast('No pending homework to print', true); return; }
+  var scope = document.getElementById('pendScope').value;
+  var logoSrc = (SCHOOL_LOGO && SCHOOL_LOGO !== '__LOGO_PLACEHOLDER__') ? SCHOOL_LOGO : '';
+  var scopeTitle, subtitle;
+  if (scope === 'student') {
+    scopeTitle = rows[0].student + ' — Class ' + rows[0].cls;
+    subtitle = 'Pending Homework Follow-up (for Parent)';
+  } else if (scope === 'class') {
+    scopeTitle = 'Class ' + (document.getElementById('pendCls').value || 'All');
+    subtitle = 'Pending Homework Follow-up — Class wise';
+  } else {
+    scopeTitle = 'Whole School';
+    subtitle = 'Pending Homework Follow-up — School wide';
+  }
+
+  var bodyRows = rows.map(function(r) {
+    var rColor = r.reason === 'Absent' ? '#6366f1' : '#dc2626';
+    return '<tr>' +
+      '<td>' + fmtDateShort(r.date) + '</td>' +
+      '<td>' + r.cls + '</td>' +
+      '<td><strong>' + r.student + '</strong></td>' +
+      '<td>' + r.subject + '</td>' +
+      '<td>' + (r.homework || '—') + '</td>' +
+      '<td style="color:' + rColor + ';font-weight:600">' + r.reason + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var html =
+    '<div style="display:flex;align-items:center;gap:12px;border-bottom:2px solid #1a2744;padding-bottom:10px;margin-bottom:14px">' +
+      (logoSrc ? '<img src="' + logoSrc + '" style="width:48px;height:48px;object-fit:contain">' : '') +
+      '<div><div style="font-size:16px;font-weight:700;color:#1a2744">' + cfg.schoolName + '</div>' +
+      '<div style="font-size:11px;color:#666">' + subtitle + ' — ' + scopeTitle + '</div></div>' +
+      '<div style="margin-left:auto;text-align:right;font-size:10px;color:#888">Generated ' + new Date().toLocaleDateString('en-IN') + '<br>by EyeSpy</div>' +
+    '</div>' +
+    '<table border="1" cellpadding="7" cellspacing="0" style="width:100%;border-collapse:collapse;font-family:Arial;font-size:12px">' +
+      '<tr style="background:#1a2744;color:#fff"><th>Date</th><th>Class</th><th>Student</th><th>Subject</th><th>Pending Homework</th><th>Reason</th></tr>' +
+      bodyRows +
+    '</table>' +
+    '<div style="margin-top:12px;font-size:11px;color:#555">Total pending items: <strong>' + rows.length + '</strong></div>' +
+    '<div style="margin-top:20px;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:8px">This report lists all homework not yet completed. Please ensure pending work is submitted at the earliest. — Homework Teacher, ' + cfg.schoolName + '</div>';
+
+  openPrintWin('<style>body{font-family:Arial;margin:24px;color:#111}@media print{body{margin:0}}th{text-align:left}</style>' + html);
+}
+
+
+function updateSettingsMeta() {
+  var cls = getClassList();
+  document.getElementById('secDesc').textContent = cfg.standards.length + ' standards · ' + cls.length + ' classes';
+  var gc = cfg.gradStd.length;
+  document.getElementById('gradDesc').textContent = gc ? 'Enabled for ' + gc + ' standard' + (gc>1?'s':'') : 'Disabled for all standards';
+  var bks = []; try { bks = JSON.parse(localStorage.getItem('eyespy_bks')||'[]'); } catch(e) {}
+  document.getElementById('bkDesc').textContent = bks.length + ' backup' + (bks.length!==1?'s':'') + ' saved';
+}
+
+function renderSecList() {
+  document.getElementById('secList').innerHTML = cfg.standards.map(function(s) {
+    var chips = s.sections.map(function(sec) {
+      var rmBtn = sec !== 'A' ? '<button style="background:none;border:none;color:rgba(240,180,41,.5);cursor:pointer;font-size:13px;line-height:1;padding:0" data-rmsec="1" data-std="' + s.num + '" data-sec="' + sec + '">×</button>' : '';
+      return '<div class="secchip">' + sec + rmBtn + '</div>';
+    }).join('');
+    var addBtn = s.sections.length < 8 ? '<button style="padding:3px 9px;background:var(--surf2);border:1px dashed var(--border-strong);border-radius:5px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer" data-addsec="' + s.num + '">+ Add</button>' : '';
+    return '<div class="stdrow"><div style="font-size:14px;font-weight:700">' + (s.label || ('Standard ' + s.num)) + '</div><div class="secchips">' + chips + addBtn + '</div></div>';
+  }).join('');
+}
+
+function addSec(num) {
+  var std = cfg.standards.find(function(s) { return s.num === num; });
+  if (!std) return;
+  var next = String.fromCharCode(65 + std.sections.length);
+  std.sections.push(next);
+  saveCfg(); renderSecList(); buildDropdowns(); updateSettingsMeta();
+  showToast('Section ' + next + ' added to ' + (std.label || num));
+}
+
+function rmSec(num, sec) {
+  var std = cfg.standards.find(function(s) { return s.num === num; });
+  if (!std) return;
+  std.sections = std.sections.filter(function(s) { return s !== sec; });
+  saveCfg(); renderSecList(); buildDropdowns(); updateSettingsMeta();
+  showToast('Section ' + sec + ' removed');
+}
+
+function renderGradList() {
+  document.getElementById('gradList').innerHTML = cfg.standards.map(function(s) {
+    var on = cfg.gradStd.indexOf(s.num) !== -1;
+    return '<div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 13px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">' +
+      '<div><div style="font-size:14px;font-weight:600">' + (s.label || ('Standard ' + s.num)) + '</div><div style="font-size:11px;color:var(--muted)">' + (on ? '✅ Grading on' : 'Disabled') + '</div></div>' +
+      '<button class="stgl ' + (on?'on':'off') + '" data-gradtgl="' + s.num + '"></button>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleGrad(num) {
+  var pos = cfg.gradStd.indexOf(num);
+  if (pos !== -1) cfg.gradStd.splice(pos, 1); else cfg.gradStd.push(num);
+  saveCfg(); renderGradList(); updateSettingsMeta();
+}
+
+// ═══════════════════════════════════════════
+// SUBJECTS MANAGER — per-standard add/edit/delete
+// ═══════════════════════════════════════════
+function renderSubjList() {
+  // Ensure all standards have an entry
+  cfg.standards.forEach(function(s) {
+    if (!cfg.subjectsByStd[s.num]) {
+      cfg.subjectsByStd[s.num] = (DEFAULT_SUBJECTS[s.num] || DEFAULT_SUBJECTS['default']).slice();
+    }
+  });
+
+  document.getElementById('subjList').innerHTML = cfg.standards.map(function(s) {
+    var subjs = cfg.subjectsByStd[s.num] || [];
+    var tags = subjs.length
+      ? subjs.map(function(subj) {
+          return '<span class="subj-tag">' + subj +
+                 '<button class="subj-tag-rm" data-rmsubj="1" data-std="' + s.num + '" data-subj="' + subj.replace(/"/g,'&quot;') + '" title="Remove">×</button>' +
+                 '</span>';
+        }).join('')
+      : '<span style="font-size:12px;color:var(--muted);font-style:italic">No subjects yet</span>';
+
+    return '<div class="subj-row">' +
+      '<div class="subj-row-hd">' +
+        '<div class="subj-row-name">' + (s.label || ('Standard ' + s.num)) + '</div>' +
+        '<span class="pill py">' + subjs.length + ' subject' + (subjs.length !== 1 ? 's' : '') + '</span>' +
+      '</div>' +
+      '<div class="subj-list">' + tags + '</div>' +
+      '<div class="subj-add-form">' +
+        '<input class="inp" type="text" placeholder="Add subject (e.g. Sanskrit)" data-newsubj="' + s.num + '">' +
+        '<button class="btn btn-g" data-addsubj="' + s.num + '">+ Add</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function addSubjectFromInput(std) {
+  var input = document.querySelector('[data-newsubj="' + std + '"]');
+  if (!input) return;
+  var name = input.value.trim();
+  if (!name) { showToast('Type a subject name first', true); return; }
+  if (name.length > 30) { showToast('Subject name too long (max 30)', true); return; }
+  if (!cfg.subjectsByStd[std]) cfg.subjectsByStd[std] = [];
+  // Case-insensitive duplicate check
+  var dup = cfg.subjectsByStd[std].some(function(s) { return s.toLowerCase() === name.toLowerCase(); });
+  if (dup) { showToast('Subject already exists for this standard', true); return; }
+  cfg.subjectsByStd[std].push(name);
+  saveCfg();
+  renderSubjList();
+  // Re-focus and clear input
+  setTimeout(function() {
+    var newInput = document.querySelector('[data-newsubj="' + std + '"]');
+    if (newInput) { newInput.focus(); }
+  }, 50);
+  showToast('Added "' + name + '"');
+  // Refresh subject dropdowns on assign page
+  updateSubjectDropdowns();
+}
+
+function rmSubject(std, subj) {
+  if (!cfg.subjectsByStd[std]) return;
+  if (!confirm('Remove "' + subj + '" from ' + (cfg.standards.find(function(s){return s.num===std;})||{}).label + '?\n\nNote: existing homework records won\'t be affected.')) return;
+  cfg.subjectsByStd[std] = cfg.subjectsByStd[std].filter(function(s) { return s !== subj; });
+  saveCfg();
+  renderSubjList();
+  showToast('Removed "' + subj + '"');
+  updateSubjectDropdowns();
+}
+
+function resetSubjectsToDefaults() {
+  if (!confirm('Reset all subjects to the built-in defaults?\n\nThis will replace your current subject lists for every standard. This cannot be undone.')) return;
+  cfg.subjectsByStd = {};
+  cfg.standards.forEach(function(s) {
+    cfg.subjectsByStd[s.num] = (DEFAULT_SUBJECTS[s.num] || DEFAULT_SUBJECTS['default']).slice();
+  });
+  saveCfg();
+  renderSubjList();
+  showToast('Subjects reset to defaults');
+  updateSubjectDropdowns();
+}
+
+function saveLblSize() {
+  cfg.labelW = parseInt(document.getElementById('lblW').value) || 60;
+  cfg.labelH = parseInt(document.getElementById('lblH').value) || 40;
+  saveCfg(); showToast('Label size: ' + cfg.labelW + '×' + cfg.labelH + 'mm');
+}
+
+function saveSchInfo() {
+  cfg.schoolName = document.getElementById('schName').value || cfg.schoolName;
+  cfg.schWeb = document.getElementById('schWeb').value || cfg.schWeb;
+  saveCfg(); showToast('School info saved');
+}
+
+function checkConn() {
+  var el = document.getElementById('connSt');
+  var txt = document.getElementById('connTxt');
+  if (cfg.scriptURL && cfg.scriptURL !== EYESPY_DEFAULT_SCRIPT_URL) { el.className = 'connst'; txt.textContent = 'URL saved — tap Test Connection to verify'; }
+  else { el.className = 'connst bad'; txt.textContent = 'Not connected — paste Apps Script URL below'; }
+}
+
+async function testConn() {
+  if (!cfg.scriptURL || cfg.scriptURL === EYESPY_DEFAULT_SCRIPT_URL) { showToast('Paste the Script URL first', true); return; }
+  showLoad('Testing…');
+  try {
+    var r = await fetch(cfg.scriptURL + '?action=ping');
+    var j = await r.json();
+    hideLoad();
+    if (j.status === 'ok') { document.getElementById('connSt').className = 'connst'; document.getElementById('connTxt').textContent = '✓ Connected to Google Sheets'; showToast('Connected!'); }
+    else throw new Error();
+  } catch(e) { hideLoad(); showToast('Connection failed — check URL', true); }
+}
+
+// WA Template
+function openWATempl() {
+  document.getElementById('tmpl-all').value = cfg.tmplAll || DEFAULT_TMPL_ALL;
+  document.getElementById('tmpl-partial').value = cfg.tmplPartial || DEFAULT_TMPL_PARTIAL;
+  document.getElementById('tmpl-none').value = cfg.tmplNone || DEFAULT_TMPL_NONE;
+  openModal('waTemplModal');
+}
+function insertVar(v) {
+  var ta = document.activeElement;
+  if (ta.id !== 'tmpl-all' && ta.id !== 'tmpl-partial' && ta.id !== 'tmpl-none') ta = document.getElementById('tmpl-partial');
+  var pos = ta.selectionStart || ta.value.length;
+  ta.value = ta.value.slice(0, pos) + v + ta.value.slice(ta.selectionEnd || pos);
+  ta.focus();
+}
+function saveTemplates() {
+  cfg.tmplAll = document.getElementById('tmpl-all').value;
+  cfg.tmplPartial = document.getElementById('tmpl-partial').value;
+  cfg.tmplNone = document.getElementById('tmpl-none').value;
+  saveCfg(); showToast('Templates saved');
+}
+function resetTemplates() {
+  document.getElementById('tmpl-all').value = DEFAULT_TMPL_ALL;
+  document.getElementById('tmpl-partial').value = DEFAULT_TMPL_PARTIAL;
+  document.getElementById('tmpl-none').value = DEFAULT_TMPL_NONE;
+  cfg.tmplAll = DEFAULT_TMPL_ALL;
+  cfg.tmplPartial = DEFAULT_TMPL_PARTIAL;
+  cfg.tmplNone = DEFAULT_TMPL_NONE;
+  saveCfg(); showToast('Reset to default');
+}
+
+// Backup
+function autoBackup(type, label, data) {
+  var bks = []; try { bks = JSON.parse(localStorage.getItem('eyespy_bks')||'[]'); } catch(e) {}
+  var record = {id: Date.now(), ts: new Date().toISOString(), type: type, label: label};
+  bks.unshift(record);
+  if (bks.length > 20) bks = bks.slice(0, 20);
+  localStorage.setItem('eyespy_bks', JSON.stringify(bks));
+  updateSettingsMeta();
+  if (cfg.scriptURL && cfg.scriptURL !== EYESPY_DEFAULT_SCRIPT_URL && data) {
+    callSheet({
+      action: 'saveBackup',
+      backupType: type,
+      label: label,
+      savedAt: record.ts,
+      state: data
+    });
+  }
+}
+function renderBkList() {
+  var bks = []; try { bks = JSON.parse(localStorage.getItem('eyespy_bks')||'[]'); } catch(e) {}
+  var el = document.getElementById('bkList');
+  if (!bks.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No backups yet — created automatically on every save.</div>'; return; }
+  el.innerHTML = bks.map(function(b) {
+    var d = new Date(b.ts);
+    return '<div class="bkitem"><div><div style="font-size:13px;font-weight:600">' + (b.label||b.type) + '</div><div style="font-size:10px;color:var(--muted);margin-top:2px">' + b.type + ' · ' + d.toLocaleDateString('en-IN') + ' ' + d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) + '</div></div><span class="pill pg">Saved</span></div>';
+  }).join('');
+}
+
+// CSV Import
+function resetCSV() {
+  buildDropdowns();
+  document.getElementById('csvPaste').value = '';
+  document.getElementById('csvPrevWrap').style.display = 'none';
+  csvParsed = [];
+}
+function handleCSVFile(e) {
+  var f = e.target.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(ev) { parseCSVContent(ev.target.result); };
+  r.readAsText(f);
+}
+function parseCSVPaste() { parseCSVContent(document.getElementById('csvPaste').value); }
+function parseCSVContent(raw) {
+  csvParsed = raw.split(/\r?\n/).map(function(l) { return l.split(',')[0].trim(); })
+    .filter(function(l) { return l.length > 1 && !l.toLowerCase().startsWith('name'); });
+  var wrap = document.getElementById('csvPrevWrap');
+  if (csvParsed.length) {
+    document.getElementById('csvPrevCnt').textContent = 'Found ' + csvParsed.length + ' student' + (csvParsed.length!==1?'s':'') + ':';
+    document.getElementById('csvPrev').innerHTML = csvParsed.map(function(n,i) { return '<div style="padding:2px 0;border-bottom:1px solid var(--border)">' + (i+1) + '. ' + n + '</div>'; }).join('');
+    wrap.style.display = 'block';
+  } else { wrap.style.display = 'none'; }
+}
+function importStudents() {
+  var cls = document.getElementById('csvCls').value;
+  if (!cls) { showToast('Select a class first', true); return; }
+  if (!csvParsed.length) { showToast('No names found — paste names or upload CSV', true); return; }
+  if (!cfg.students) cfg.students = {};
+  var existing = cfg.students[cls] || [];
+  var newNames = csvParsed.filter(function(n) { return existing.indexOf(n) === -1; });
+  cfg.students[cls] = existing.concat(newNames);
+  saveCfg(); buildDropdowns(); renderStuList();
+  showToast('Added ' + newNames.length + ' students to Class ' + cls);
+  closeModal('csvModal');
+  updateSettingsMeta();
+}
+function downloadCSVTmpl() {
+  var csv = 'Student Name\nAarav Shah\nRiya Patel\nMihir Desai\n';
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'students_template.csv'; a.click();
+}
+
+// ═══════════════════════════════════════════
+// CLASS PROMOTION (Year-End)
+// ═══════════════════════════════════════════
+
+// Ordered class progression — used to determine "next" class
+var CLASS_PROGRESSION = ['PG','NUR','LKG','UKG','1','2','3','4','5','6','7','8','9','10','11','12'];
+
+function getNextStandard(curStd) {
+  var i = CLASS_PROGRESSION.indexOf(curStd);
+  if (i === -1 || i === CLASS_PROGRESSION.length - 1) return null; // 12 → graduate
+  return CLASS_PROGRESSION[i + 1];
+}
+
+function buildPromotionPlan() {
+  // For every class in cfg.students, calculate target class
+  var plan = [];
+  var students = cfg.students || {};
+  Object.keys(students).forEach(function(cls) {
+    var parts = cls.split('-');
+    var std = parts[0], sec = parts[1] || 'A';
+    var next = getNextStandard(std);
+    var count = students[cls].length;
+    if (count === 0) return;
+    plan.push({
+      from: cls,
+      to: next ? (next + '-' + sec) : null,
+      count: count,
+      graduate: !next
+    });
+  });
+  // Sort by progression order
+  plan.sort(function(a, b) {
+    return CLASS_PROGRESSION.indexOf(a.from.split('-')[0]) - CLASS_PROGRESSION.indexOf(b.from.split('-')[0]);
+  });
+  return plan;
+}
+
+function openPromoteModal() {
+  var plan = buildPromotionPlan();
+  if (!plan.length) {
+    showToast('No students to promote', true);
+    return;
+  }
+  var html = plan.map(function(p) {
+    if (p.graduate) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center"><span><strong>' + p.from + '</strong> → 🎓 Graduate</span><span style="color:var(--muted)">' + p.count + ' student' + (p.count!==1?'s':'') + '</span></div>';
+    }
+    return '<div style="display:flex;justify-content:space-between;align-items:center"><span><strong>' + p.from + '</strong> → <strong style="color:var(--gold)">' + p.to + '</strong></span><span style="color:var(--muted)">' + p.count + ' student' + (p.count!==1?'s':'') + '</span></div>';
+  }).join('');
+  document.getElementById('promotePlan').innerHTML = html;
+
+  // Suggest next academic year label
+  var thisYear = new Date().getFullYear();
+  var academicStart = new Date().getMonth() >= 3 ? thisYear : thisYear - 1; // assume April start
+  var newYearStart = academicStart + 1;
+  document.getElementById('promoteYear').value = newYearStart + '–' + (String(newYearStart+1).slice(-2));
+
+  openModal('promoteModal');
+}
+
+function confirmPromote() {
+  if (!confirm('This will move every student to the next class. Standard 12 students will graduate. A backup is being saved first. Continue?')) return;
+
+  // 1. Full snapshot backup before changes
+  var snap = {
+    type: 'pre-promotion',
+    timestamp: new Date().toISOString(),
+    students: JSON.parse(JSON.stringify(cfg.students || {})),
+    pending: getPending(),
+    academicYear: cfg.academicYear || ''
+  };
+  autoBackup('Promotion (pre-snapshot)', 'Year-end promotion ' + (document.getElementById('promoteYear').value || ''), snap);
+
+  // 2. Build promoted student map
+  var plan = buildPromotionPlan();
+  var newStudents = {};
+  var graduated = [];
+
+  plan.forEach(function(p) {
+    var names = cfg.students[p.from] || [];
+    if (p.graduate) {
+      // Save graduates to archive
+      graduated.push({
+        cls: p.from,
+        students: names.slice(),
+        academicYear: cfg.academicYear || ''
+      });
+    } else {
+      // Merge into target class (in case there are already students in target — unlikely but safe)
+      if (!newStudents[p.to]) newStudents[p.to] = [];
+      names.forEach(function(n) {
+        if (newStudents[p.to].indexOf(n) === -1) newStudents[p.to].push(n);
+      });
+    }
+  });
+
+  // Preserve any classes that had no students before (so dropdowns stay populated)
+  Object.keys(cfg.students).forEach(function(cls) {
+    var matchedAsSource = plan.some(function(p) { return p.from === cls; });
+    if (!matchedAsSource && !newStudents[cls]) newStudents[cls] = [];
+  });
+  // Also ensure PG class is empty and ready for new admissions
+  if (!newStudents['PG-A']) newStudents['PG-A'] = [];
+
+  cfg.students = newStudents;
+
+  // 3. Save graduates to archive (persistent)
+  if (graduated.length && document.getElementById('archive12').checked) {
+    var archive = JSON.parse(localStorage.getItem('eyespy_graduates') || '[]');
+    graduated.forEach(function(g) {
+      archive.push({
+        promotedOn: new Date().toISOString(),
+        academicYear: snap.academicYear,
+        cls: g.cls,
+        students: g.students
+      });
+    });
+    localStorage.setItem('eyespy_graduates', JSON.stringify(archive));
+  }
+
+  // 4. Update academic year
+  cfg.academicYear = document.getElementById('promoteYear').value || cfg.academicYear;
+
+  // 5. Clear pending records if requested
+  if (document.getElementById('clearPending').checked) {
+    localStorage.setItem('eyespy_pending', '[]');
+  }
+
+  // 6. Persist & refresh UI
+  saveCfg();
+  buildDropdowns();
+  updateSettingsMeta();
+  renderReports();
+  closeModal('promoteModal');
+
+  var totalGrad = graduated.reduce(function(s, g) { return s + g.students.length; }, 0);
+  showToast('✓ Promoted all classes. ' + totalGrad + ' graduate' + (totalGrad!==1?'s':'') + ' archived.');
+
+  // Show a summary
+  setTimeout(function() {
+    alert('Promotion complete!\n\n' +
+      'Academic year: ' + cfg.academicYear + '\n' +
+      'Classes promoted: ' + plan.filter(function(p){return !p.graduate;}).length + '\n' +
+      'Graduates archived: ' + totalGrad + '\n\n' +
+      'Standard 1-A is now ready for last year\'s PG/Nursery students.\n' +
+      'PG-A is empty and ready for new admissions.\n\n' +
+      'If anything looks wrong, restore the "Promotion (pre-snapshot)" backup from Settings → Auto Backups.');
+  }, 400);
+}
+
+// Script Code
+function buildScriptCode() {
+  document.getElementById('scriptCode').textContent = [
+    '// EyeSpy Backend — Google Apps Script',
+    '// 1. script.google.com → New Project',
+    '// 2. Paste in Code.gs → replace SHEET_ID',
+    '// 3. Deploy → Web App → Execute as Me → Anyone',
+    '',
+    "const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';",
+    '',
+    'function doGet(e) {',
+    '  const a = e.parameter.action;',
+    "  if (a === 'ping') return json({status:'ok'});",
+    "  if (a === 'getHomework') {",
+    "    const sh = getOrCreate('HW_Assignments',",
+    "      ['hw_id','date','due_date','class','subject','hw_text','assigned_by','created_at']);",
+    '    const rows = sh.getDataRange().getValues();',
+    '    const entries = [];',
+    '    for (let i=1;i<rows.length;i++)',
+    '      if (rows[i][3]===e.parameter.class && (rows[i][2]===e.parameter.date || rows[i][1]===e.parameter.date))',
+    '        entries.push({subject:rows[i][4], hwText:rows[i][5]});',
+    "    return json({status:'ok', entries});",
+    '  }',
+    "  return json({status:'error',message:'Unknown'});",
+    '}',
+    '',
+    'function doPost(e) {',
+    '  const data = JSON.parse(e.postData.contents);',
+    "  if (data.action === 'saveHomework') {",
+    "    const sh = getOrCreate('HW_Assignments',",
+    "      ['hw_id','date','due_date','class','subject','hw_text','assigned_by','created_at']);",
+    '    data.rows.forEach(r => sh.appendRow([r.hw_id,r.date,r.due_date,r.class,',
+    '      r.subject,r.hw_text,r.assigned_by,r.created_at]));',
+    "    return json({status:'ok'});",
+    '  }',
+    "  if (data.action === 'saveSubmissions') {",
+    "    const sh = getOrCreate('HW_Submissions',",
+    "      ['date','class','student_name','status','subjects_not_done','grade','marked_by','marked_at']);",
+    '    data.rows.forEach(r => sh.appendRow([r.date,r.class,r.student_name,',
+    "      r.status,r.subjects_not_done||'',r.grade||'',r.marked_by,r.marked_at]));",
+    "    return json({status:'ok'});",
+    '  }',
+    "  if (data.action === 'saveLabelToDrive') {",
+    '    DriveApp.getRootFolder().createFile(',
+    "      data.filename+'.txt', data.content, MimeType.PLAIN_TEXT);",
+    "    return json({status:'ok'});",
+    '  }',
+    "  return json({status:'error',message:'Unknown'});",
+    '}',
+    '',
+    'function getOrCreate(name, headers) {',
+    '  const ss = SpreadsheetApp.openById(SHEET_ID);',
+    '  let sh = ss.getSheetByName(name);',
+    '  if (!sh) { sh = ss.insertSheet(name); sh.appendRow(headers); }',
+    '  return sh;',
+    '}',
+    'function json(obj) {',
+    '  return ContentService.createTextOutput(JSON.stringify(obj))',
+    '    .setMimeType(ContentService.MimeType.JSON);',
+    '}'
+  ].join('\n');
+}
+
+function copyScript() {
+  var code = document.getElementById('scriptCode').textContent;
+  if (navigator.clipboard) { navigator.clipboard.writeText(code).then(function() { showToast('Code copied!'); }); }
+  else { fallbackCopy(code); }
+}
+
+// ═══════════════════════════════════════════
+// GOOGLE SHEETS API
+// ═══════════════════════════════════════════
+async function callSheet(payload) {
+  if (!cfg.scriptURL || cfg.scriptURL === EYESPY_DEFAULT_SCRIPT_URL) { await new Promise(function(r) { setTimeout(r, 1000); }); return true; }
+  try {
+    var r = await fetch(cfg.scriptURL, {method:'POST', body:JSON.stringify(payload), headers:{'Content-Type':'application/json'}});
+    var j = await r.json();
+    return j.status === 'ok';
+  } catch(e) { showToast('Could not reach Google Sheets', true); return false; }
+}
+
+async function callSheetGet(params) {
+  if (!cfg.scriptURL || cfg.scriptURL === EYESPY_DEFAULT_SCRIPT_URL) return null;
+  try {
+    var qs = Object.keys(params).map(function(k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+    var r = await fetch(cfg.scriptURL + '?' + qs);
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function showLoad(t) { document.getElementById('ovTxt').textContent = t || 'Loading…'; document.getElementById('loadOv').classList.add('show'); }
+function hideLoad() { document.getElementById('loadOv').classList.remove('show'); }
+function showToast(msg, isErr) {
+  var t = document.getElementById('toast');
+  t.textContent = (isErr ? '⚠ ' : '✓ ') + msg;
+  t.className = 'toast' + (isErr ? ' err' : '') + ' show';
+  setTimeout(function() { t.classList.remove('show'); }, 3200);
+}
+</script>
+</body>
+</html>
