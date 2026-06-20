@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -591,7 +590,7 @@ input[type=date].inp::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.
     <div class="fr"><label class="lbl">Apps Script URL</label><input class="inp" type="text" id="urlInp" placeholder="https://script.google.com/macros/s/…/exec"></div>
     <div class="brow">
       <button class="btn btn-g" id="testConnBtn">🔌 Test Connection</button>
-      <button class="btn btn-o" id="scriptCodeBtn">📋 Get Script Code</button>
+      <button class="btn btn-o" id="scriptCodeBtn">📋 Copy Script URL</button>
     </div>
   </div>
   <div class="sec">Classes &amp; Students</div>
@@ -981,7 +980,7 @@ var sRowCtr = 0, sRows = [];
 var subState = {}, subjND = {}, gradeState = {}, absentState = {}, curHW = null;
 var csvParsed = [];
 var lastActiveTemplateId = 'tmpl-partial';
-var EYESPY_DEFAULT_SCRIPT_URL = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+var EYESPY_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxKm6d9a6JjDTwPYo7_aM_DUEcWWfnowD7Y2TYkeuA1kYqo6Gi743iSm9-gpoMjAHsitw/exec';
 
 // ═══════════════════════════════════════════
 // INIT
@@ -1206,7 +1205,7 @@ function bindAllEvents() {
   document.getElementById('bkBtn').addEventListener('click', function() { renderBkList(); openModal('bkModal'); });
   document.getElementById('expBtn').addEventListener('click', function() { openModal('expModal'); });
   document.getElementById('testConnBtn').addEventListener('click', testConn);
-  document.getElementById('scriptCodeBtn').addEventListener('click', function() { openModal('scriptModal'); });
+  document.getElementById('scriptCodeBtn').addEventListener('click', copyScriptUrl);
   document.getElementById('saveLblBtn').addEventListener('click', saveLblSize);
   document.getElementById('saveSchBtn').addEventListener('click', saveSchInfo);
   document.getElementById('urlInp').addEventListener('input', function() { cfg.scriptURL = this.value.trim(); saveCfg(); checkConn(); });
@@ -2665,20 +2664,26 @@ function saveSchInfo() {
 function checkConn() {
   var el = document.getElementById('connSt');
   var txt = document.getElementById('connTxt');
-  if (cfg.scriptURL && cfg.scriptURL !== EYESPY_DEFAULT_SCRIPT_URL) { el.className = 'connst'; txt.textContent = 'URL saved — tap Test Connection to verify'; }
+  if (cfg.scriptURL) { el.className = 'connst'; txt.textContent = 'Apps Script URL ready — tap Test Connection to verify'; }
   else { el.className = 'connst bad'; txt.textContent = 'Not connected — paste Apps Script URL below'; }
 }
 
 async function testConn() {
-  if (!cfg.scriptURL || cfg.scriptURL === EYESPY_DEFAULT_SCRIPT_URL) { showToast('Paste the Script URL first', true); return; }
+  if (!cfg.scriptURL) { showToast('Paste the Script URL first', true); return; }
   showLoad('Testing…');
   try {
     var r = await fetch(cfg.scriptURL + '?action=ping');
-    var j = await r.json();
+    var j = await parseSheetResponse(r);
     hideLoad();
     if (j.status === 'ok') { document.getElementById('connSt').className = 'connst'; document.getElementById('connTxt').textContent = '✓ Connected to Google Sheets'; showToast('Connected!'); }
     else throw new Error();
   } catch(e) { hideLoad(); showToast('Connection failed — check URL', true); }
+}
+
+function copyScriptUrl() {
+  var url = cfg.scriptURL || EYESPY_DEFAULT_SCRIPT_URL;
+  if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function() { showToast('Apps Script URL copied!'); }); }
+  else { fallbackCopy(url); }
 }
 
 // WA Template
@@ -2719,7 +2724,7 @@ function autoBackup(type, label, data) {
   if (bks.length > 20) bks = bks.slice(0, 20);
   localStorage.setItem('eyespy_bks', JSON.stringify(bks));
   updateSettingsMeta();
-  if (cfg.scriptURL && cfg.scriptURL !== EYESPY_DEFAULT_SCRIPT_URL && data) {
+  if (cfg.scriptURL && data) {
     callSheet({
       action: 'saveBackup',
       backupType: type,
@@ -3006,21 +3011,28 @@ function copyScript() {
 // GOOGLE SHEETS API
 // ═══════════════════════════════════════════
 async function callSheet(payload) {
-  if (!cfg.scriptURL || cfg.scriptURL === EYESPY_DEFAULT_SCRIPT_URL) { await new Promise(function(r) { setTimeout(r, 1000); }); return true; }
+  if (!cfg.scriptURL) { await new Promise(function(r) { setTimeout(r, 1000); }); return true; }
   try {
-    var r = await fetch(cfg.scriptURL, {method:'POST', body:JSON.stringify(payload), headers:{'Content-Type':'application/json'}});
-    var j = await r.json();
+    var r = await fetch(cfg.scriptURL, {method:'POST', body:JSON.stringify(payload)});
+    var j = await parseSheetResponse(r);
     return j.status === 'ok';
   } catch(e) { showToast('Could not reach Google Sheets', true); return false; }
 }
 
 async function callSheetGet(params) {
-  if (!cfg.scriptURL || cfg.scriptURL === EYESPY_DEFAULT_SCRIPT_URL) return null;
+  if (!cfg.scriptURL) return null;
   try {
     var qs = Object.keys(params).map(function(k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
     var r = await fetch(cfg.scriptURL + '?' + qs);
-    return await r.json();
+    return await parseSheetResponse(r);
   } catch(e) { return null; }
+}
+
+async function parseSheetResponse(r) {
+  var txt = await r.text();
+  if (!txt) return {status: r.ok ? 'ok' : 'error'};
+  try { return JSON.parse(txt); }
+  catch(e) { return {status: txt.trim().toLowerCase() === 'ok' ? 'ok' : 'error', raw: txt}; }
 }
 
 // ═══════════════════════════════════════════
