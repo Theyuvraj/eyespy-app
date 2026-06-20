@@ -980,7 +980,7 @@ var sRowCtr = 0, sRows = [];
 var subState = {}, subjND = {}, gradeState = {}, absentState = {}, curHW = null;
 var csvParsed = [];
 var lastActiveTemplateId = 'tmpl-partial';
-var EYESPY_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxKm6d9a6JjDTwPYo7_aM_DUEcWWfnowD7Y2TYkeuA1kYqo6Gi743iSm9-gpoMjAHsitw/exec';
+var EYESPY_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdf8jepqDwm7wSbV1La8fm6efHPiL968gy8DVKDUtRJz1-bz-kYaqBjG0ZAQoV3JQr/exec';
 
 // ═══════════════════════════════════════════
 // INIT
@@ -1025,7 +1025,9 @@ function loadCfg() {
   cfg.schoolName = cfg.schoolName || 'The Heritage Public School';
   cfg.schWeb = cfg.schWeb || 'www.thps.in';
   cfg.scriptURL = cfg.scriptURL || EYESPY_DEFAULT_SCRIPT_URL;
-  if (cfg.scriptURL.indexOf('/macros/library/') !== -1 || cfg.scriptURL === 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
+  if (cfg.scriptURL.indexOf('/macros/library/') !== -1 ||
+      cfg.scriptURL === 'https://script.google.com/macros/s/AKfycbxKm6d9a6JjDTwPYo7_aM_DUEcWWfnowD7Y2TYkeuA1kYqo6Gi743iSm9-gpoMjAHsitw/exec' ||
+      cfg.scriptURL === 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
     cfg.scriptURL = EYESPY_DEFAULT_SCRIPT_URL;
   }
   cfg.academicYear = cfg.academicYear || '2026–27';
